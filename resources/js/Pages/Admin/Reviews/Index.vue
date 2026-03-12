@@ -58,7 +58,7 @@ function formatDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '�
                 <template v-for="r in reviews.data" :key="r.id">
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm font-medium text-gray-900 max-w-[200px] truncate">{{ r.product?.name || '—' }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-500">{{ r.user?.name || '—' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ r.user?.name || r.guest_name || 'Khách vãng lai' }}</td>
                         <td class="px-4 py-3 text-center text-yellow-400 text-sm">{{ '★'.repeat(r.rating) }}{{ '☆'.repeat(5 - r.rating) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-600 max-w-[300px]">
                             <p v-if="r.title" class="font-medium">{{ r.title }}</p>
