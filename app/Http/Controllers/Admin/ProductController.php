@@ -92,6 +92,11 @@ class ProductController extends Controller
             'compatibility_specs.*.value' => 'nullable|string|max:500',
         ]);
 
+        // Check slug collision with categories
+        if (Category::where('slug', $validated['slug'])->exists()) {
+            return back()->withErrors(['slug' => 'Slug "' . $validated['slug'] . '" đã được sử dụng bởi một danh mục.'])->withInput();
+        }
+
         $productData = collect($validated)->except(['thumbnail', 'gallery', 'compatibility_specs'])->toArray();
         $product = Product::create($productData);
 
@@ -180,6 +185,11 @@ class ProductController extends Controller
             'compatibility_specs.*.specification_key_id' => 'required|exists:specification_keys,id',
             'compatibility_specs.*.value' => 'nullable|string|max:500',
         ]);
+
+        // Check slug collision with categories
+        if (Category::where('slug', $validated['slug'])->exists()) {
+            return back()->withErrors(['slug' => 'Slug "' . $validated['slug'] . '" đã được sử dụng bởi một danh mục.'])->withInput();
+        }
 
         $productData = collect($validated)->except(['thumbnail', 'gallery', 'compatibility_specs'])->toArray();
         $product->update($productData);

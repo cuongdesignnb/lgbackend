@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\ComponentType;
 use App\Models\Filter;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
@@ -31,11 +33,22 @@ class CategoryController extends Controller
         ]);
     }
 
+    // Reserved slugs that conflict with frontend routes
+    private static array $reservedSlugs = [
+        'about', 'account', 'auth', 'blog', 'cart', 'checkout',
+        'configurator', 'contact', 'orders', 'shipping', 'warranty',
+        'admin', 'api', 'san-pham',
+    ];
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories',
+            'slug' => [
+                'required', 'string', 'max:255',
+                'unique:categories',
+                Rule::notIn(self::$reservedSlugs),
+            ],
             'parent_id' => 'nullable|exists:categories,id',
             'component_type_id' => 'nullable|exists:component_types,id',
             'description' => 'nullable|string',
@@ -45,6 +58,11 @@ class CategoryController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
         ]);
+
+        // Check slug collision with products
+        if (Product::where('slug', $validated['slug'])->exists()) {
+            return back()->withErrors(['slug' => 'Slug "' . $validated['slug'] . '" đã được sử dụng bởi một sản phẩm.'])->withInput();
+        }
 
         Category::create($validated);
 
@@ -67,7 +85,11 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
+            'slug' => [
+                'required', 'string', 'max:255',
+                Rule::unique('categories')->ignore($category->id),
+                Rule::notIn(self::$reservedSlugs),
+            ],
             'parent_id' => 'nullable|exists:categories,id',
             'component_type_id' => 'nullable|exists:component_types,id',
             'description' => 'nullable|string',
@@ -77,6 +99,11 @@ class CategoryController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
         ]);
+
+        // Check slug collision with products
+        if (Product::where('slug', $validated['slug'])->exists()) {
+            return back()->withErrors(['slug' => 'Slug "' . $validated['slug'] . '" đã được sử dụng bởi một sản phẩm.'])->withInput();
+        }
 
         $category->update($validated);
 
