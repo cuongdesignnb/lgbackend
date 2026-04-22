@@ -42,6 +42,7 @@ const items = flatList(props.categories);
                     <td class="px-4 py-3 text-sm text-gray-500 text-center">{{ c.sort_order }}</td>
                     <td class="px-4 py-3 text-center"><span :class="c.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ c.is_active ? 'Hiển thị' : 'Ẩn' }}</span></td>
                     <td class="px-4 py-3 text-right space-x-2">
+                        <Link :href="`/admin/categories/${c.id}/filters`" class="text-emerald-600 hover:text-emerald-800 text-sm" title="Gán bộ lọc">🔍 Bộ lọc</Link>
                         <Link :href="`/admin/categories/${c.id}/edit`" class="text-indigo-600 hover:text-indigo-800 text-sm">Sửa</Link>
                         <button @click="destroy(c.id)" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
                     </td>

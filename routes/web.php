@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\FilterController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CompatibilityController;
@@ -62,6 +63,13 @@ Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
 
     // Component Types
     Route::resource('component-types', ComponentTypeController::class);
+
+    // Filters
+    Route::resource('filters', FilterController::class);
+
+    // Category filter assignment
+    Route::get('categories/{category}/filters', [CategoryController::class, 'editFilters'])->name('categories.filters.edit');
+    Route::put('categories/{category}/filters', [CategoryController::class, 'updateFilters'])->name('categories.filters.update');
 
     // Compatibility Rules
     Route::resource('compatibility', CompatibilityController::class);
