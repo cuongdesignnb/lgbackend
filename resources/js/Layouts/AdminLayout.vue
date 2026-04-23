@@ -288,3 +288,60 @@ const icons = {
     background: rgba(100, 116, 139, 0.5);
 }
 </style>
+
+<style>
+/* Global admin form dark theme */
+.min-h-screen.bg-slate-950 input[type="text"],
+.min-h-screen.bg-slate-950 input[type="number"],
+.min-h-screen.bg-slate-950 input[type="email"],
+.min-h-screen.bg-slate-950 input[type="password"],
+.min-h-screen.bg-slate-950 input[type="url"],
+.min-h-screen.bg-slate-950 input[type="tel"],
+.min-h-screen.bg-slate-950 input[type="search"],
+.min-h-screen.bg-slate-950 input[type="date"],
+.min-h-screen.bg-slate-950 input[type="datetime-local"],
+.min-h-screen.bg-slate-950 input[type="time"],
+.min-h-screen.bg-slate-950 textarea,
+.min-h-screen.bg-slate-950 select {
+    background-color: rgba(30, 41, 59, 0.6) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+.min-h-screen.bg-slate-950 input::placeholder,
+.min-h-screen.bg-slate-950 textarea::placeholder {
+    color: #64748b !important;
+}
+.min-h-screen.bg-slate-950 input:focus,
+.min-h-screen.bg-slate-950 textarea:focus,
+.min-h-screen.bg-slate-950 select:focus {
+    border-color: rgba(6, 182, 212, 0.5) !important;
+    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.25) !important;
+    outline: none !important;
+}
+.min-h-screen.bg-slate-950 select option {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+.min-h-screen.bg-slate-950 input[type="checkbox"] {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(71, 85, 105, 0.6) !important;
+}
+.min-h-screen.bg-slate-950 input[type="checkbox"]:checked {
+    background-color: #06b6d4 !important;
+    border-color: #06b6d4 !important;
+}
+/* Rich editor / TipTap */
+.min-h-screen.bg-slate-950 .tiptap,
+.min-h-screen.bg-slate-950 .ProseMirror {
+    background-color: rgba(30, 41, 59, 0.6) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+.min-h-screen.bg-slate-950 .tiptap .is-editor-empty:first-child::before {
+    color: #64748b !important;
+}
+/* Labels readable */
+.min-h-screen.bg-slate-950 label {
+    color: #cbd5e1;
+}
+</style>
