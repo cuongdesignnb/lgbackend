@@ -463,4 +463,76 @@ const icons = {
     background: rgba(100, 116, 139, 0.4);
     border-radius: 9999px;
 }
+/* Badge/Label overrides - convert light bg to dark */
+.min-h-screen.bg-slate-950 .bg-green-100 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-amber-100 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-yellow-100 {
+    background-color: rgba(234, 179, 8, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-red-100 {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+}
+.min-h-screen.bg-slate-950 .bg-indigo-100 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-purple-100 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-orange-100 {
+    background-color: rgba(249, 115, 22, 0.15) !important;
+}
+.min-h-screen.bg-slate-950 .bg-pink-100 {
+    background-color: rgba(236, 72, 153, 0.15) !important;
+}
+/* Fix text colors on badges */
+.min-h-screen.bg-slate-950 .text-green-700,
+.min-h-screen.bg-slate-950 .text-green-800 {
+    color: #34d399 !important;
+}
+.min-h-screen.bg-slate-950 .text-blue-700,
+.min-h-screen.bg-slate-950 .text-blue-800 {
+    color: #60a5fa !important;
+}
+.min-h-screen.bg-slate-950 .text-amber-700,
+.min-h-screen.bg-slate-950 .text-amber-800 {
+    color: #fbbf24 !important;
+}
+.min-h-screen.bg-slate-950 .text-yellow-700,
+.min-h-screen.bg-slate-950 .text-yellow-800 {
+    color: #facc15 !important;
+}
+.min-h-screen.bg-slate-950 .text-red-700,
+.min-h-screen.bg-slate-950 .text-red-800 {
+    color: #f87171 !important;
+}
+.min-h-screen.bg-slate-950 .text-indigo-800 {
+    color: #818cf8 !important;
+}
+.min-h-screen.bg-slate-950 .text-purple-700,
+.min-h-screen.bg-slate-950 .text-purple-800 {
+    color: #c084fc !important;
+}
+/* Fix border colors on alerts/badges */
+.min-h-screen.bg-slate-950 .border-green-200 {
+    border-color: rgba(16, 185, 129, 0.25) !important;
+}
+.min-h-screen.bg-slate-950 .border-red-200 {
+    border-color: rgba(239, 68, 68, 0.25) !important;
+}
+.min-h-screen.bg-slate-950 .border-yellow-200 {
+    border-color: rgba(234, 179, 8, 0.25) !important;
+}
+.min-h-screen.bg-slate-950 .border-blue-200 {
+    border-color: rgba(59, 130, 246, 0.25) !important;
+}
 </style>
