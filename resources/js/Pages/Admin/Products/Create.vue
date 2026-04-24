@@ -1,5 +1,4 @@
 <script setup>
-import { computed, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import RichEditor from '@/Components/RichEditor.vue';
@@ -8,18 +7,16 @@ import MediaPicker from '@/Components/MediaPicker.vue';
 const props = defineProps({
     categories: Array,
     brands: Array,
-    componentTypes: Array,
 });
 
 const form = useForm({
-    name: '', slug: '', sku: '', category_id: '', brand_id: '', component_type_id: '',
+    name: '', slug: '', sku: '', category_id: '', brand_id: '',
     description: '', short_description: '', price: '', sale_price: '', stock_quantity: 0,
     is_active: true, is_featured: false, warranty_months: 12,
     meta_title: '', meta_description: '',
     thumbnail: '',
     gallery: [],
     specifications_text: '',
-    compatibility_specs: [],
 });
 
 function genSlug() {
@@ -27,32 +24,6 @@ function genSlug() {
         .replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd')
         .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
-
-// Get spec keys for selected component type
-const selectedComponentType = computed(() => {
-    if (!form.component_type_id) return null;
-    return props.componentTypes.find(t => t.id == form.component_type_id);
-});
-
-const specKeys = computed(() => {
-    return selectedComponentType.value?.specification_keys || [];
-});
-
-// Rebuild compatibility specs when component type changes
-watch(() => form.component_type_id, () => {
-    const keys = specKeys.value;
-    form.compatibility_specs = keys.map(key => {
-        const existing = form.compatibility_specs.find(s => s.specification_key_id === key.id);
-        return {
-            specification_key_id: key.id,
-            label: key.label,
-            key: key.key,
-            unit: key.unit || '',
-            data_type: key.data_type,
-            value: existing?.value || '',
-        };
-    });
-});
 
 function submit() { form.post('/admin/products'); }
 </script>
@@ -94,9 +65,6 @@ function submit() { form.post('/admin/products'); }
                     </div>
                     <div><label class="block text-sm font-medium text-slate-300 mb-1">Thương hiệu</label>
                         <select v-model="form.brand_id" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"><option value="">Chọn...</option><option v-for="b in brands" :value="b.id">{{ b.name }}</option></select>
-                    </div>
-                    <div><label class="block text-sm font-medium text-slate-300 mb-1">Loại linh kiện</label>
-                        <select v-model="form.component_type_id" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"><option value="">Chọn...</option><option v-for="t in componentTypes" :value="t.id">{{ t.name }}</option></select>
                     </div>
                 </div>
                 <div><label class="block text-sm font-medium text-slate-300 mb-1">Mô tả ngắn</label><textarea v-model="form.short_description" rows="2" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></textarea></div>
@@ -144,42 +112,7 @@ function submit() { form.post('/admin/products'); }
                     class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-cyan-500/50"></textarea>
             </div>
 
-            <!-- Thông số tương thích (cho PC Builder) -->
-            <div v-if="specKeys.length" class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">
-                <h4 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    Thông số tương thích
-                    <span class="text-xs font-normal text-slate-500">({{ selectedComponentType?.name }})</span>
-                </h4>
-                <p class="text-xs text-slate-400">Các thông số này dùng cho <strong>kiểm tra tương thích tự động</strong> trong trang Cấu hình PC. Chỉ cần điền các thông số liên quan đến tương thích (socket, loại RAM, TDP, kích thước...).</p>
-                <div class="border border-slate-800/60 rounded-lg overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-800/40">
-                            <tr>
-                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase w-1/3">Thông số</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase">Giá trị</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase w-20">Đơn vị</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/40">
-                            <tr v-for="spec in form.compatibility_specs" :key="spec.specification_key_id" class="hover:bg-slate-800/40">
-                                <td class="px-4 py-2">
-                                    <span class="font-medium text-slate-300">{{ spec.label }}</span>
-                                    <span class="text-slate-500 text-xs ml-1">({{ spec.key }})</span>
-                                </td>
-                                <td class="px-4 py-2">
-                                    <input v-model="spec.value"
-                                        :type="spec.data_type === 'integer' || spec.data_type === 'decimal' ? 'number' : 'text'"
-                                        :step="spec.data_type === 'decimal' ? '0.01' : undefined"
-                                        :placeholder="`Nhập ${spec.label.toLowerCase()}...`"
-                                        class="w-full border border-slate-700/50 rounded px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                </td>
-                                <td class="px-4 py-2 text-slate-400 text-xs">{{ spec.unit }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+
 
             <!-- SEO -->
             <div class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">

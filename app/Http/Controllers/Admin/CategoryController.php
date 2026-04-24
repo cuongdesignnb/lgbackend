@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\ComponentType;
+
 use App\Models\Filter;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::with('parent', 'children', 'componentType')
+        $categories = Category::with('parent', 'children')
             ->whereNull('parent_id')
             ->orderBy('sort_order')
             ->get();
@@ -29,7 +29,6 @@ class CategoryController extends Controller
     {
         return Inertia::render('Admin/Categories/Create', [
             'categories' => Category::whereNull('parent_id')->get(),
-            'componentTypes' => ComponentType::orderBy('display_order')->get(),
         ]);
     }
 
@@ -37,10 +36,10 @@ class CategoryController extends Controller
     private static array $reservedSlugs = [
         // Legacy English routes
         'about', 'account', 'auth', 'blog', 'cart', 'checkout',
-        'configurator', 'contact', 'orders', 'shipping', 'warranty',
+        'contact', 'orders', 'shipping', 'warranty',
         // Vietnamese routes
         'gioi-thieu', 'tai-khoan', 'tin-tuc', 'gio-hang', 'thanh-toan',
-        'cau-hinh', 'lien-he', 'don-hang', 'van-chuyen', 'bao-hanh',
+        'lien-he', 'don-hang', 'van-chuyen', 'bao-hanh',
         'dang-nhap', 'dang-ky', 'quen-mat-khau',
         // System
         'admin', 'api', 'san-pham',
@@ -56,7 +55,7 @@ class CategoryController extends Controller
                 Rule::notIn(self::$reservedSlugs),
             ],
             'parent_id' => 'nullable|exists:categories,id',
-            'component_type_id' => 'nullable|exists:component_types,id',
+
             'description' => 'nullable|string',
             'image' => 'nullable|string',
             'sort_order' => 'integer',
@@ -83,7 +82,6 @@ class CategoryController extends Controller
             'categories' => Category::whereNull('parent_id')
                 ->where('id', '!=', $category->id)
                 ->get(),
-            'componentTypes' => ComponentType::orderBy('display_order')->get(),
         ]);
     }
 
@@ -97,7 +95,7 @@ class CategoryController extends Controller
                 Rule::notIn(self::$reservedSlugs),
             ],
             'parent_id' => 'nullable|exists:categories,id',
-            'component_type_id' => 'nullable|exists:component_types,id',
+
             'description' => 'nullable|string',
             'image' => 'nullable|string',
             'sort_order' => 'integer',

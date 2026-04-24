@@ -38,8 +38,7 @@ const navGroups = [
             { name: 'Danh mục', href: '/admin/categories', icon: 'folder' },
             { name: 'Thương hiệu', href: '/admin/brands', icon: 'tag' },
             { name: 'Bộ lọc', href: '/admin/filters', icon: 'filter' },
-            { name: 'Loại linh kiện', href: '/admin/component-types', icon: 'cpu' },
-            { name: 'Tương thích', href: '/admin/compatibility', icon: 'compat' },
+
         ],
     },
     {
@@ -136,7 +135,7 @@ const icons = {
                     <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                 </div>
                 <template v-if="!sidebarCollapsed">
-                    <span class="ml-3 text-sm font-bold text-white tracking-wide">PC Shop</span>
+                    <span class="ml-3 text-sm font-bold text-white tracking-wide">Lgtech</span>
                     <span class="ml-auto text-[9px] font-semibold text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded border border-cyan-400/20">ADMIN</span>
                 </template>
             </div>

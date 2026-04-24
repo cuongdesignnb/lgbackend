@@ -15,7 +15,6 @@ class Product extends Model
     protected $fillable = [
         'category_id',
         'brand_id',
-        'component_type_id',
         'name',
         'slug',
         'sku',
@@ -68,10 +67,7 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
-    public function componentType(): BelongsTo
-    {
-        return $this->belongsTo(ComponentType::class);
-    }
+
 
     public function images(): HasMany
     {
@@ -88,15 +84,9 @@ class Product extends Model
         return $this->hasMany(ProductSpecification::class);
     }
 
-    public function supportedValues(): HasMany
-    {
-        return $this->hasMany(ComponentSupportedValue::class);
-    }
 
-    public function powerRequirement(): HasOne
-    {
-        return $this->hasOne(PowerRequirement::class);
-    }
+
+
 
     public function reviews(): HasMany
     {

@@ -13,7 +13,7 @@ class SettingSeeder extends Seeder
             // ─── General ────────────────────────────────────────
             [
                 'key' => 'site_name',
-                'value' => 'PC Shop',
+                'value' => 'Lgtech',
                 'group' => 'general',
                 'type' => 'text',
                 'label' => 'Tên website',
@@ -163,7 +163,7 @@ class SettingSeeder extends Seeder
             // ─── SEO ────────────────────────────────────────────
             [
                 'key' => 'seo_title',
-                'value' => 'PC Shop - Bán PC, Laptop & Linh kiện máy tính chính hãng',
+                'value' => 'Lgtech - Bán PC, Laptop & Linh kiện máy tính chính hãng',
                 'group' => 'seo',
                 'type' => 'text',
                 'label' => 'SEO Title mặc định',
@@ -171,7 +171,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'seo_description',
-                'value' => 'PC Shop - Chuyên cung cấp PC Gaming, Laptop, linh kiện máy tính chính hãng giá tốt. Build PC online, kiểm tra tương thích tự động.',
+                'value' => 'Lgtech - Chuyên cung cấp PC Gaming, Laptop, linh kiện máy tính chính hãng giá tốt. Build PC online, kiểm tra tương thích tự động.',
                 'group' => 'seo',
                 'type' => 'textarea',
                 'label' => 'SEO Description mặc định',
@@ -179,7 +179,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'seo_keywords',
-                'value' => 'pc gaming, laptop, linh kiện máy tính, build pc, mua pc, pc shop',
+                'value' => 'pc gaming, laptop, linh kiện máy tính, build pc, mua pc, Lgtech',
                 'group' => 'seo',
                 'type' => 'text',
                 'label' => 'SEO Keywords mặc định',
@@ -279,7 +279,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'payment_bank_holder',
-                'value' => 'CONG TY PC SHOP',
+                'value' => 'CONG TY Lgtech',
                 'group' => 'payment',
                 'type' => 'text',
                 'label' => 'Tên chủ tài khoản',

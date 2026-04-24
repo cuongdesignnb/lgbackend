@@ -4,8 +4,7 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\FilterController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\CompatibilityController;
-use App\Http\Controllers\Admin\ComponentTypeController;
+
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -62,8 +61,7 @@ Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
     // Coupons
     Route::resource('coupons', CouponController::class);
 
-    // Component Types
-    Route::resource('component-types', ComponentTypeController::class);
+
 
     // Filters
     Route::resource('filters', FilterController::class);
@@ -72,8 +70,7 @@ Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
     Route::get('categories/{category}/filters', [CategoryController::class, 'editFilters'])->name('categories.filters.edit');
     Route::put('categories/{category}/filters', [CategoryController::class, 'updateFilters'])->name('categories.filters.update');
 
-    // Compatibility Rules
-    Route::resource('compatibility', CompatibilityController::class);
+
 
     // Posts
     Route::resource('posts', PostController::class);

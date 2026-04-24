@@ -89,8 +89,8 @@ const statusColor = { active: 'bg-green-100 text-emerald-400', inactive: 'bg-sla
                         <a :href="`/${p.category?.slug || 'san-pham'}/${p.slug}`" target="_blank" class="inline-flex items-center text-slate-400 hover:text-cyan-400 transition-colors" title="Xem trên website">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
-                        <Link :href="`/admin/products/${p.id}/edit`" class="text-cyan-500 hover:text-cyan-300 text-sm">Sua</Link>
-                        <button @click="destroy(p.id)" class="text-red-400 hover:text-red-300 text-sm">Xoa</button>
+                        <Link :href="`/admin/products/${p.id}/edit`" class="text-cyan-500 hover:text-cyan-300 text-sm">Sửa</Link>
+                        <button @click="destroy(p.id)" class="text-red-400 hover:text-red-300 text-sm">Xóa</button>
                     </td>
                 </tr>
                 <tr v-if="!products.data?.length"><td colspan="7" class="px-4 py-8 text-center text-slate-500">Chưa có sản phẩm nào</td></tr>

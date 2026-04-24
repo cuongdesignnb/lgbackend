@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\PcBuilderController;
+
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SettingController;
@@ -31,9 +31,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/featured', [ProductController::class, 'featured']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
-    Route::get('/products/{slug}/suggestions', [ProductController::class, 'suggestions']);
     Route::post('/products/{slug}/reviews', [ReviewController::class, 'store']);
-    Route::get('/products/component/{slug}', [ProductController::class, 'byComponentType']);
 
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
@@ -62,10 +60,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/blog/featured', [BlogController::class, 'featured']);
     Route::get('/blog/{slug}', [BlogController::class, 'show']);
 
-    // PC Builder
-    Route::get('/builder/component-types', [PcBuilderController::class, 'componentTypes']);
-    Route::post('/builder/compatible/{slug}', [PcBuilderController::class, 'compatibleProducts']);
-    Route::post('/builder/check', [PcBuilderController::class, 'checkBuild']);
+
 
     // Cart (works with session or auth)
     Route::get('/cart', [CartController::class, 'index']);
@@ -89,9 +84,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/user/profile', [AuthController::class, 'updateProfile']);
         Route::put('/user/password', [AuthController::class, 'changePassword']);
 
-        // Saved builds (requires auth)
-        Route::post('/builder/save', [PcBuilderController::class, 'saveBuild']);
-        Route::get('/builder/saved', [PcBuilderController::class, 'savedBuilds']);
+
 
         // User orders
         Route::get('/orders', [OrderController::class, 'index']);

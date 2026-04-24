@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
-use App\Models\ComponentType;
+
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductSpecification;
@@ -17,7 +17,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'brand', 'componentType', 'primaryImage'])
+        $query = Product::with(['category', 'brand', 'primaryImage'])
             ->latest();
 
         if ($request->search) {
@@ -58,7 +58,6 @@ class ProductController extends Controller
         return Inertia::render('Admin/Products/Create', [
             'categories' => Category::where('is_active', true)->get(),
             'brands' => Brand::where('is_active', true)->get(),
-            'componentTypes' => ComponentType::with(['specificationKeys' => fn ($q) => $q->orderBy('display_order')])->orderBy('display_order')->get(),
         ]);
     }
 
@@ -70,7 +69,7 @@ class ProductController extends Controller
             'sku' => 'required|string|max:100|unique:products',
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
-            'component_type_id' => 'nullable|exists:component_types,id',
+
             'description' => 'nullable|string',
             'short_description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0',
@@ -87,9 +86,6 @@ class ProductController extends Controller
             'gallery.*' => 'string',
             // Specifications
             'specifications_text' => 'nullable|string',
-            'compatibility_specs' => 'nullable|array',
-            'compatibility_specs.*.specification_key_id' => 'required|exists:specification_keys,id',
-            'compatibility_specs.*.value' => 'nullable|string|max:500',
         ]);
 
         // Check slug collision with categories
@@ -97,7 +93,7 @@ class ProductController extends Controller
             return back()->withErrors(['slug' => 'Slug "' . $validated['slug'] . '" đã được sử dụng bởi một danh mục.'])->withInput();
         }
 
-        $productData = collect($validated)->except(['thumbnail', 'gallery', 'compatibility_specs'])->toArray();
+        $productData = collect($validated)->except(['thumbnail', 'gallery'])->toArray();
         $product = Product::create($productData);
 
         // Save images
@@ -121,24 +117,7 @@ class ProductController extends Controller
             }
         }
 
-        // Save compatibility specifications
-        if (!empty($validated['compatibility_specs'])) {
-            foreach ($validated['compatibility_specs'] as $spec) {
-                if (!empty($spec['value'])) {
-                    $specKey = SpecificationKey::find($spec['specification_key_id']);
-                    $data = [
-                        'product_id' => $product->id,
-                        'specification_key_id' => $spec['specification_key_id'],
-                    ];
-                    if ($specKey && in_array($specKey->data_type, ['integer', 'decimal'])) {
-                        $data['value_numeric'] = $spec['value'];
-                    } else {
-                        $data['value_string'] = $spec['value'];
-                    }
-                    ProductSpecification::create($data);
-                }
-            }
-        }
+
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Tạo sản phẩm thành công');
@@ -146,13 +125,12 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        $product->load(['category', 'brand', 'componentType', 'images', 'specifications.specificationKey']);
+        $product->load(['category', 'brand', 'images', 'specifications.specificationKey']);
 
         return Inertia::render('Admin/Products/Edit', [
             'product' => $product,
             'categories' => Category::where('is_active', true)->get(),
             'brands' => Brand::where('is_active', true)->get(),
-            'componentTypes' => ComponentType::with(['specificationKeys' => fn ($q) => $q->orderBy('display_order')])->orderBy('display_order')->get(),
         ]);
     }
 
@@ -164,7 +142,7 @@ class ProductController extends Controller
             'sku' => 'required|string|max:100|unique:products,sku,' . $product->id,
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
-            'component_type_id' => 'nullable|exists:component_types,id',
+
             'description' => 'nullable|string',
             'short_description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0',
@@ -181,9 +159,6 @@ class ProductController extends Controller
             'gallery.*' => 'string',
             // Specifications
             'specifications_text' => 'nullable|string',
-            'compatibility_specs' => 'nullable|array',
-            'compatibility_specs.*.specification_key_id' => 'required|exists:specification_keys,id',
-            'compatibility_specs.*.value' => 'nullable|string|max:500',
         ]);
 
         // Check slug collision with categories
@@ -191,7 +166,7 @@ class ProductController extends Controller
             return back()->withErrors(['slug' => 'Slug "' . $validated['slug'] . '" đã được sử dụng bởi một danh mục.'])->withInput();
         }
 
-        $productData = collect($validated)->except(['thumbnail', 'gallery', 'compatibility_specs'])->toArray();
+        $productData = collect($validated)->except(['thumbnail', 'gallery'])->toArray();
         $product->update($productData);
 
         // Rebuild images
@@ -216,25 +191,7 @@ class ProductController extends Controller
             }
         }
 
-        // Rebuild compatibility specifications
-        $product->specifications()->delete();
-        if (!empty($validated['compatibility_specs'])) {
-            foreach ($validated['compatibility_specs'] as $spec) {
-                if (!empty($spec['value'])) {
-                    $specKey = SpecificationKey::find($spec['specification_key_id']);
-                    $data = [
-                        'product_id' => $product->id,
-                        'specification_key_id' => $spec['specification_key_id'],
-                    ];
-                    if ($specKey && in_array($specKey->data_type, ['integer', 'decimal'])) {
-                        $data['value_numeric'] = $spec['value'];
-                    } else {
-                        $data['value_string'] = $spec['value'];
-                    }
-                    ProductSpecification::create($data);
-                }
-            }
-        }
+
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Cập nhật sản phẩm thành công');

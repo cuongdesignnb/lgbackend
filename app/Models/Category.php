@@ -11,7 +11,6 @@ class Category extends Model
 {
     protected $fillable = [
         'parent_id',
-        'component_type_id',
         'name',
         'slug',
         'description',
@@ -43,10 +42,7 @@ class Category extends Model
         return $this->hasMany(Product::class);
     }
 
-    public function componentType(): BelongsTo
-    {
-        return $this->belongsTo(ComponentType::class);
-    }
+
 
     public function filters(): BelongsToMany
     {

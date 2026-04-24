@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\SpecificationKey;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -344,37 +344,6 @@ class CategoryController extends Controller
 
         // Legacy spec filters (if no assigned filters, fallback)
         $specFilters = [];
-        if ($assignedFilters->isEmpty()) {
-            $componentTypeId = $category->component_type_id;
-            if ($componentTypeId) {
-                $specKeys = SpecificationKey::where('component_type_id', $componentTypeId)
-                    ->where('is_filterable', true)
-                    ->orderBy('display_order')
-                    ->get();
-
-                foreach ($specKeys as $specKey) {
-                    $values = \DB::table('product_specifications')
-                        ->join('products', 'products.id', '=', 'product_specifications.product_id')
-                        ->whereIn('products.category_id', $catIdsArr)
-                        ->where('products.is_active', true)
-                        ->where('product_specifications.specification_key_id', $specKey->id)
-                        ->whereNotNull('product_specifications.value_string')
-                        ->distinct()
-                        ->orderBy('product_specifications.value_string')
-                        ->pluck('product_specifications.value_string');
-
-                    if ($values->isNotEmpty()) {
-                        $specFilters[] = [
-                            'key_id' => $specKey->id,
-                            'label'  => $specKey->label,
-                            'unit'   => $specKey->unit,
-                            'type'   => $specKey->data_type,
-                            'values' => $values,
-                        ];
-                    }
-                }
-            }
-        }
 
         return response()->json([
             'category' => $category,

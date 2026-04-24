@@ -27,7 +27,7 @@ const items = flatList(props.categories);
             <thead class="bg-slate-800/40"><tr>
                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Tên</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Slug</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Loại LK</th>
+
                 <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Thứ tự</th>
                 <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Trạng thái</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Thao tác</th>
@@ -38,19 +38,19 @@ const items = flatList(props.categories);
                         <span v-if="c.level" class="text-slate-500 mr-1">└</span>{{ c.name }}
                     </td>
                     <td class="px-4 py-3 text-sm text-slate-400">{{ c.slug }}</td>
-                    <td class="px-4 py-3 text-sm text-slate-400">{{ c.component_type?.name || '—' }}</td>
+
                     <td class="px-4 py-3 text-sm text-slate-400 text-center">{{ c.sort_order }}</td>
                     <td class="px-4 py-3 text-center"><span :class="c.is_active ? 'bg-green-100 text-emerald-400' : 'bg-slate-800/60 text-slate-400'" class="px-2 py-0.5 rounded-full text-xs font-medium">{{ c.is_active ? 'Hiển thị' : 'Ẩn' }}</span></td>
                     <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                         <a :href="`/${c.slug}`" target="_blank" class="inline-flex items-center text-slate-400 hover:text-cyan-400 transition-colors" title="Xem trên website">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
-                        <Link :href="`/admin/categories/${c.id}/filters`" class="text-emerald-500 hover:text-emerald-300 text-sm" title="Gan bo loc">Bo loc</Link>
-                        <Link :href="`/admin/categories/${c.id}/edit`" class="text-cyan-500 hover:text-cyan-300 text-sm">Sua</Link>
-                        <button @click="destroy(c.id)" class="text-red-400 hover:text-red-300 text-sm">Xoa</button>
+                        <Link :href="`/admin/categories/${c.id}/filters`" class="text-emerald-500 hover:text-emerald-300 text-sm" title="Gán bộ lọc">Bộ lọc</Link>
+                        <Link :href="`/admin/categories/${c.id}/edit`" class="text-cyan-500 hover:text-cyan-300 text-sm">Sửa</Link>
+                        <button @click="destroy(c.id)" class="text-red-400 hover:text-red-300 text-sm">Xóa</button>
                     </td>
                 </tr>
-                <tr v-if="!items.length"><td colspan="6" class="px-4 py-8 text-center text-slate-500">Chưa có danh mục</td></tr>
+                <tr v-if="!items.length"><td colspan="5" class="px-4 py-8 text-center text-slate-500">Chưa có danh mục</td></tr>
             </tbody>
         </table>
     </div>

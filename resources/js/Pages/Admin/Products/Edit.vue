@@ -1,5 +1,4 @@
 <script setup>
-import { computed, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import RichEditor from '@/Components/RichEditor.vue';
@@ -9,18 +8,11 @@ const props = defineProps({
     product: Object,
     categories: Array,
     brands: Array,
-    componentTypes: Array,
 });
 
 // Get thumbnail and gallery from product images
 const primaryImg = (props.product.images || []).find(i => i.is_primary);
 const galleryImgs = (props.product.images || []).filter(i => !i.is_primary).map(i => i.url);
-
-// Build existing compatibility specs map
-const existingSpecs = {};
-(props.product.specifications || []).forEach(s => {
-    existingSpecs[s.specification_key_id] = s.value_string || (s.value_numeric !== null ? String(s.value_numeric) : '');
-});
 
 const form = useForm({
     name: props.product.name,
@@ -28,7 +20,6 @@ const form = useForm({
     sku: props.product.sku,
     category_id: props.product.category_id || '',
     brand_id: props.product.brand_id || '',
-    component_type_id: props.product.component_type_id || '',
     description: props.product.description || '',
     short_description: props.product.short_description || '',
     price: props.product.price,
@@ -42,40 +33,7 @@ const form = useForm({
     thumbnail: primaryImg ? primaryImg.url : '',
     gallery: galleryImgs,
     specifications_text: props.product.specifications_text || '',
-    compatibility_specs: [],
 });
-
-// Get spec keys for selected component type
-const selectedComponentType = computed(() => {
-    if (!form.component_type_id) return null;
-    return props.componentTypes.find(t => t.id == form.component_type_id);
-});
-
-const specKeys = computed(() => {
-    return selectedComponentType.value?.specification_keys || [];
-});
-
-// Build compatibility spec entries from spec keys + existing values
-function buildCompatibilitySpecs() {
-    const keys = specKeys.value;
-    form.compatibility_specs = keys.map(key => ({
-        specification_key_id: key.id,
-        label: key.label,
-        key: key.key,
-        unit: key.unit || '',
-        data_type: key.data_type,
-        value: existingSpecs[key.id] || '',
-    }));
-}
-
-watch(() => form.component_type_id, () => {
-    buildCompatibilitySpecs();
-});
-
-// Initialize if product already has a component type
-if (form.component_type_id) {
-    buildCompatibilitySpecs();
-}
 
 function submit() { form.put(`/admin/products/${props.product.id}`); }
 </script>
@@ -116,9 +74,6 @@ function submit() { form.put(`/admin/products/${props.product.id}`); }
                     </div>
                     <div><label class="block text-sm font-medium text-slate-300 mb-1">Thương hiệu</label>
                         <select v-model="form.brand_id" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"><option value="">Chọn...</option><option v-for="b in brands" :value="b.id">{{ b.name }}</option></select>
-                    </div>
-                    <div><label class="block text-sm font-medium text-slate-300 mb-1">Loại linh kiện</label>
-                        <select v-model="form.component_type_id" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"><option value="">Chọn...</option><option v-for="t in componentTypes" :value="t.id">{{ t.name }}</option></select>
                     </div>
                 </div>
                 <div><label class="block text-sm font-medium text-slate-300 mb-1">Mô tả ngắn</label><textarea v-model="form.short_description" rows="2" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></textarea></div>
@@ -164,42 +119,7 @@ function submit() { form.put(`/admin/products/${props.product.id}`); }
                     class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-cyan-500/50"></textarea>
             </div>
 
-            <!-- Thông số tương thích (cho PC Builder) -->
-            <div v-if="specKeys.length" class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">
-                <h4 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    Thông số tương thích
-                    <span class="text-xs font-normal text-slate-500">({{ selectedComponentType?.name }})</span>
-                </h4>
-                <p class="text-xs text-slate-400">Các thông số này dùng cho <strong>kiểm tra tương thích tự động</strong> trong trang Cấu hình PC. Chỉ cần điền các thông số liên quan đến tương thích (socket, loại RAM, TDP, kích thước...).</p>
-                <div class="border border-slate-800/60 rounded-lg overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-800/40">
-                            <tr>
-                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase w-1/3">Thông số</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase">Giá trị</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase w-20">Đơn vị</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/40">
-                            <tr v-for="spec in form.compatibility_specs" :key="spec.specification_key_id" class="hover:bg-slate-800/40">
-                                <td class="px-4 py-2">
-                                    <span class="font-medium text-slate-300">{{ spec.label }}</span>
-                                    <span class="text-slate-500 text-xs ml-1">({{ spec.key }})</span>
-                                </td>
-                                <td class="px-4 py-2">
-                                    <input v-model="spec.value"
-                                        :type="spec.data_type === 'integer' || spec.data_type === 'decimal' ? 'number' : 'text'"
-                                        :step="spec.data_type === 'decimal' ? '0.01' : undefined"
-                                        :placeholder="`Nhập ${spec.label.toLowerCase()}...`"
-                                        class="w-full border border-slate-700/50 rounded px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                </td>
-                                <td class="px-4 py-2 text-slate-400 text-xs">{{ spec.unit }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+
 
             <!-- SEO -->
             <div class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">
