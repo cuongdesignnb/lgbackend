@@ -48,6 +48,8 @@ const navGroups = [
             { name: 'Bài viết', href: '/admin/posts', icon: 'post' },
             { name: 'DM bài viết', href: '/admin/post-categories', icon: 'category' },
             { name: 'AI Bài viết', href: '/admin/ai-articles', icon: 'ai' },
+            { name: 'Video', href: '/admin/videos', icon: 'media' },
+            { name: 'Catalogue', href: '/admin/catalogues', icon: 'page' },
             { name: 'Trang tĩnh', href: '/admin/pages', icon: 'page' },
             { name: 'Banner', href: '/admin/banners', icon: 'banner' },
             { name: 'Thư viện Media', href: '/admin/media', icon: 'media' },

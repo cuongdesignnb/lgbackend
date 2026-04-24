@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AiArticleController;
+use App\Http\Controllers\Admin\VideoController;
+use App\Http\Controllers\Admin\CatalogueController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -83,6 +85,10 @@ Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
 
     // Pages
     Route::resource('pages', PageController::class);
+
+    // Videos & Catalogues
+    Route::resource('videos', VideoController::class);
+    Route::resource('catalogues', CatalogueController::class);
 
     // Banners
     Route::resource('banners', BannerController::class);

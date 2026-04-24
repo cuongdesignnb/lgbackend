@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\VideoController;
+use App\Http\Controllers\Api\CatalogueController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,6 +51,13 @@ Route::prefix('v1')->group(function () {
 
     // Settings
     Route::get('/settings', [SettingController::class, 'index']);
+
+    // Videos
+    Route::get('/videos', [VideoController::class, 'index']);
+
+    // Catalogues
+    Route::get('/catalogues', [CatalogueController::class, 'index']);
+    Route::post('/catalogues/{catalogue}/download', [CatalogueController::class, 'download']);
 
     // Locations
     Route::get('/locations/provinces', [LocationController::class, 'provinces']);
