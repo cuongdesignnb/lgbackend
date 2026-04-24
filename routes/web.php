@@ -43,6 +43,11 @@ Route::prefix('payment')->name('payment.')->group(function () {
 Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Products - Excel Import/Export
+    Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+    Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
+    Route::get('products/import-template', [ProductController::class, 'importTemplate'])->name('products.import-template');
+
     // Products
     Route::resource('products', ProductController::class);
 

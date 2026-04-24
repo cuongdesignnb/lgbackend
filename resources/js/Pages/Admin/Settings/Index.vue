@@ -10,6 +10,7 @@ const props = defineProps({
 // Group labels in Vietnamese
 const groupLabels = {
     general: 'Thông tin chung',
+    appearance: 'Giao diện & Màu sắc',
     contact: 'Liên hệ',
     social: 'Mạng xã hội',
     seo: 'SEO',
@@ -21,6 +22,7 @@ const groupLabels = {
 
 const groupIcons = {
     general: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+    appearance: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
     contact: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
     social: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
     seo: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
@@ -135,20 +137,39 @@ function getSettingsForGroup(group) {
                                         <span v-if="!item.is_public" class="text-xs text-slate-500 ml-1">(nội bộ)</span>
                                     </label>
 
-                                    <!-- Text / Image URL / Color input -->
-                                    <template v-if="item.type === 'text' || item.type === 'image' || item.type === 'color'">
+                                    <!-- Text / Image URL input -->
+                                    <template v-if="item.type === 'text' || item.type === 'image'">
                                         <input
                                             v-model="formData[item.key]"
-                                            :type="item.type === 'color' ? 'color' : 'text'"
+                                            type="text"
                                             :placeholder="item.label"
-                                            :class="[
-                                                'w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50',
-                                                item.type === 'color' ? 'h-10 p-1' : ''
-                                            ]"
+                                            class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                         />
                                         <!-- Image preview -->
                                         <div v-if="item.type === 'image' && formData[item.key]" class="mt-2">
                                             <img :src="formData[item.key]" class="h-12 object-contain rounded border border-slate-800/60 p-1 bg-slate-800/40" />
+                                        </div>
+                                    </template>
+
+                                    <!-- Color picker with hex input -->
+                                    <template v-else-if="item.type === 'color'">
+                                        <div class="flex items-center gap-3">
+                                            <div class="relative">
+                                                <input
+                                                    type="color"
+                                                    :value="formData[item.key] || '#000000'"
+                                                    @input="formData[item.key] = $event.target.value"
+                                                    class="w-12 h-10 rounded-lg border border-slate-700/50 cursor-pointer p-0.5"
+                                                />
+                                            </div>
+                                            <input
+                                                v-model="formData[item.key]"
+                                                type="text"
+                                                placeholder="#c8102e"
+                                                class="flex-1 border border-slate-700/50 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                                maxlength="7"
+                                            />
+                                            <div class="w-20 h-10 rounded-lg border border-slate-700/50 flex-shrink-0" :style="{ backgroundColor: formData[item.key] || '#000' }"></div>
                                         </div>
                                     </template>
 
