@@ -233,6 +233,14 @@ class ImportWooCommerceProducts extends Command
                     $this->processImages($product, $imageUrlsString);
                 }
 
+                // ── Handle description images ──────────────────────────
+                if ($product->description) {
+                    $updatedDesc = $this->processDescriptionImages($product, $product->description);
+                    if ($updatedDesc !== $product->description) {
+                        $product->update(['description' => $updatedDesc]);
+                    }
+                }
+
                 $successCount++;
             } catch (\Exception $e) {
                 $errorRows[] = "Row {$rowNumber}: " . $e->getMessage();
@@ -458,6 +466,11 @@ class ImportWooCommerceProducts extends Command
             // Skip empty lines
             if (empty($line)) continue;
 
+            // Skip URL lines (http, https, youtu.be, etc.)
+            if (preg_match('/^https?\s*:|^\/\/|youtu\.?be|\.com\/|\.vn\//i', $line)) {
+                continue;
+            }
+
             // Detect heading: short line (< 80 chars) that matches keywords or ends with ':'
             $isHeading = false;
             if (mb_strlen($line) < 80) {
@@ -467,8 +480,8 @@ class ImportWooCommerceProducts extends Command
                         break;
                     }
                 }
-                // Also treat lines ending with ':' as headings
-                if (!$isHeading && preg_match('/^[^:]{5,60}:\s*$/', $line)) {
+                // Also treat lines ending with ':' as headings (but NOT URLs)
+                if (!$isHeading && preg_match('/^[^:]{5,60}:\s*$/', $line) && !preg_match('/https?/i', $line)) {
                     $isHeading = true;
                     $line = rtrim($line, ': ');
                 }
@@ -477,54 +490,26 @@ class ImportWooCommerceProducts extends Command
             if ($isHeading) {
                 // Flush current paragraph
                 if (!empty($currentParagraph)) {
-                    $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+                    $output[] = '<p>' . implode('<br>', $currentParagraph) . '</p>';
                     $currentParagraph = [];
                 }
                 $output[] = '<h3>' . $line . '</h3>';
                 continue;
             }
 
-            // Detect key:value lines like "Kích thước: 39 × 12 × 10.3 cm"
-            if (preg_match('/^(.{3,40})\s*:\s*(.+)$/', $line, $m)) {
-                // Check if next lines are also key:value → build a list
-                $listItems = [['key' => trim($m[1]), 'val' => trim($m[2])]];
-
-                while (isset($lines[$i + 1]) && preg_match('/^(.{3,40})\s*:\s*(.+)$/', $lines[$i + 1], $nextM)) {
-                    $listItems[] = ['key' => trim($nextM[1]), 'val' => trim($nextM[2])];
-                    $i++;
-                }
-
-                if (count($listItems) >= 2) {
-                    // Flush current paragraph
-                    if (!empty($currentParagraph)) {
-                        $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
-                        $currentParagraph = [];
-                    }
-                    // Build styled list
-                    $output[] = '<ul class="woo-specs">';
-                    foreach ($listItems as $item) {
-                        $output[] = '<li><strong>' . e($item['key']) . ':</strong> ' . e($item['val']) . '</li>';
-                    }
-                    $output[] = '</ul>';
-                    continue;
-                }
-                // Single key:value — just add to paragraph
-            }
-
-            // Regular text — accumulate into paragraph
+            // Regular text — accumulate into paragraph, each line as a <br>
             $currentParagraph[] = $line;
 
             // If accumulated text is long enough, flush as paragraph
-            $totalLen = mb_strlen(implode(' ', $currentParagraph));
-            if ($totalLen > 300) {
-                $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+            if (count($currentParagraph) > 10) {
+                $output[] = '<p>' . implode('<br>', $currentParagraph) . '</p>';
                 $currentParagraph = [];
             }
         }
 
         // Flush remaining paragraph
         if (!empty($currentParagraph)) {
-            $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+            $output[] = '<p>' . implode('<br>', $currentParagraph) . '</p>';
         }
 
         $result = implode("\n", $output);
@@ -636,6 +621,9 @@ class ImportWooCommerceProducts extends Command
                 $line = strip_tags(trim($line));
                 if (empty($line)) continue;
 
+                // Skip URL lines
+                if (preg_match('/https?|youtu\.?be|\.com\/|\.vn\//i', $line)) continue;
+
                 // Match "Key: Value" or "Key : Value"
                 if (preg_match('/^(.{2,50}?)\s*:\s*(.+)$/u', $line, $kvMatch)) {
                     $key = trim($kvMatch[1]);
@@ -663,6 +651,12 @@ class ImportWooCommerceProducts extends Command
 
             foreach ($lines as $i => $line) {
                 $line = strip_tags(trim($line));
+                // Skip URL lines
+                if (preg_match('/https?|youtu\.?be|\.com\/|\.vn\//i', $line)) {
+                    if (count($currentRun) >= 3) { $kvRuns[] = $currentRun; }
+                    $currentRun = [];
+                    continue;
+                }
                 if (preg_match('/^(.{2,40}?)\s*:\s*(.+)$/u', $line, $kvM)) {
                     $currentRun[] = ['line' => $i, 'key' => trim($kvM[1]), 'val' => trim($kvM[2])];
                 } else {
@@ -759,5 +753,79 @@ class ImportWooCommerceProducts extends Command
                 continue;
             }
         }
+    }
+
+    /**
+     * Download images found in description HTML, convert to WebP,
+     * save to local storage, and replace URLs in description.
+     */
+    private function processDescriptionImages(Product $product, string $description): string
+    {
+        // Find all image URLs in the description (both <img src="..."> and bare URLs)
+        $urls = [];
+
+        // Match <img> tags
+        if (preg_match_all('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $description, $imgMatches)) {
+            $urls = array_merge($urls, $imgMatches[1]);
+        }
+
+        // Match bare image URLs (not already in img tags)
+        if (preg_match_all('/(?<!["\'])https?:\/\/[^\s<>"\']+\.(?:jpg|jpeg|png|gif|webp|bmp)/i', $description, $bareMatches)) {
+            $urls = array_merge($urls, $bareMatches[0]);
+        }
+
+        $urls = array_unique(array_filter($urls));
+        if (empty($urls)) return $description;
+
+        foreach ($urls as $originalUrl) {
+            // Skip already-local URLs
+            if (str_contains($originalUrl, '/storage/') || !str_contains($originalUrl, 'http')) {
+                continue;
+            }
+
+            try {
+                $storagePath = 'products/' . $product->id . '/desc/' . md5($originalUrl) . '.webp';
+
+                // Skip if already downloaded
+                if (Storage::disk('public')->exists($storagePath)) {
+                    $fullUrl = Storage::url($storagePath);
+                    $description = str_replace($originalUrl, $fullUrl, $description);
+                    continue;
+                }
+
+                $response = Http::timeout(15)->get($originalUrl);
+                if (!$response->successful()) continue;
+
+                $imageContent = $response->body();
+
+                // Convert to WebP using GD
+                if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
+                    $image = @imagecreatefromstring($imageContent);
+                    if ($image !== false) {
+                        imagepalettetotruecolor($image);
+                        imagealphablending($image, true);
+                        imagesavealpha($image, true);
+
+                        ob_start();
+                        imagewebp($image, null, 80);
+                        $webpContent = ob_get_clean();
+                        imagedestroy($image);
+
+                        if (!empty($webpContent) && strlen($webpContent) > 100) {
+                            $imageContent = $webpContent;
+                        }
+                    }
+                }
+
+                Storage::disk('public')->put($storagePath, $imageContent);
+                $fullUrl = Storage::url($storagePath);
+                $description = str_replace($originalUrl, $fullUrl, $description);
+            } catch (\Exception $e) {
+                // Skip failed image downloads
+                continue;
+            }
+        }
+
+        return $description;
     }
 }
