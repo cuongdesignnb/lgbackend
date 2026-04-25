@@ -164,7 +164,8 @@ class ImportWooCommerceProducts extends Command
                 }
 
                 // Descriptions — keep HTML for rich content, only strip WP shortcodes
-                $shortDesc = $this->sanitizeHtml($this->getValue($data, ['short description', 'mô tả ngắn', 'post_excerpt']));
+                $shortDescRaw = $this->getValue($data, ['short description', 'mô tả ngắn', 'post_excerpt']);
+                $shortDesc = $this->formatShortDescription($shortDescRaw);
                 $desc = $this->sanitizeHtml($this->getValue($data, ['description', 'mô tả', 'post_content']));
 
                 $stock = max(0, (int) $this->getValue($data, ['stock', 'tồn kho', '_stock', 'in stock?']));
@@ -185,6 +186,15 @@ class ImportWooCommerceProducts extends Command
                     preg_match('/(\d+)/', $warrantyStr, $m);
                     $warrantyMonths = isset($m[1]) ? (int) $m[1] : 0;
                 }
+                // Also try to extract warranty from short description
+                if ($warrantyMonths === 0 && $shortDescRaw) {
+                    if (preg_match('/[Bb]ảo\s*hành\s*:?\s*(\d+)\s*(năm|tháng)/u', $shortDescRaw, $wm)) {
+                        $warrantyMonths = (int) $wm[1];
+                        if (mb_strtolower($wm[2]) === 'năm') {
+                            $warrantyMonths *= 12;
+                        }
+                    }
+                }
 
                 // ── Create Product ──────────────────────────────────────
                 $product = Product::updateOrCreate(
@@ -194,7 +204,7 @@ class ImportWooCommerceProducts extends Command
                         'slug' => $slug,
                         'category_id' => $categoryId,
                         'brand_id' => $brandId,
-                        'short_description' => $shortDesc ? Str::limit(strip_tags($shortDesc), 497) : null,
+                        'short_description' => $shortDesc,
                         'description' => $desc,
                         'price' => $price,
                         'sale_price' => $salePrice,
@@ -298,6 +308,96 @@ class ImportWooCommerceProducts extends Command
         $text = preg_replace('/\s+/', ' ', $text);
 
         return trim($text) ?: null;
+    }
+
+    /**
+     * Format WooCommerce short description.
+     * Converts "Key : Value Key2 : Value2" into an HTML <ul> list.
+     * Handles both single-line and multi-line formats.
+     */
+    private function formatShortDescription(?string $raw): ?string
+    {
+        if (empty($raw)) return null;
+
+        // Replace literal \n from CSV
+        $text = str_replace(['\\n', '\\r', '\\t'], ["\n", "\r", "\t"], $raw);
+
+        // Strip any HTML tags that came from WooCommerce
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+        $text = trim($text);
+
+        if (empty($text)) return null;
+
+        // Known Vietnamese keys that appear in WooCommerce short descriptions
+        $knownKeys = [
+            'Mã SP', 'Mã sản phẩm', 'Hãng', 'Thương hiệu', 'Brand',
+            'Bảo hành', 'Tình trạng', 'Xuất xứ', 'Chất liệu', 'Màu sắc',
+            'Kích thước', 'Trọng lượng', 'Sản phẩm gồm', 'Bộ sản phẩm gồm',
+            'Model', 'Dòng sản phẩm', 'Loại', 'Công suất', 'Điện áp',
+        ];
+
+        // Try to split single-line "Key : Value Key2 : Value2" format
+        // Build regex pattern: (Key1|Key2|...)\s*:\s*
+        $escapedKeys = array_map(function ($k) {
+            return preg_quote($k, '/');
+        }, $knownKeys);
+        $keysPattern = implode('|', $escapedKeys);
+
+        // Try to find key:value pairs
+        $items = [];
+        if (preg_match_all('/(' . $keysPattern . ')\s*:\s*/iu', $text, $matches, PREG_OFFSET_CAPTURE)) {
+            for ($i = 0; $i < count($matches[0]); $i++) {
+                $key = $matches[1][$i][0];
+                $startPos = $matches[0][$i][1] + strlen($matches[0][$i][0]);
+
+                // Value goes until the next key or end of string
+                if (isset($matches[0][$i + 1])) {
+                    $endPos = $matches[0][$i + 1][1];
+                } else {
+                    $endPos = strlen($text);
+                }
+
+                $value = trim(substr($text, $startPos, $endPos - $startPos));
+                if (!empty($value)) {
+                    $items[] = ['key' => $key, 'val' => $value];
+                }
+            }
+        }
+
+        // If we found at least 2 key:value pairs, format as list
+        if (count($items) >= 2) {
+            $html = '<ul class="short-desc-list">';
+            foreach ($items as $item) {
+                $html .= '<li><strong>' . e($item['key']) . ':</strong> ' . e($item['val']) . '</li>';
+            }
+            $html .= '</ul>';
+            return $html;
+        }
+
+        // Also try newline-separated key:value format
+        $lines = preg_split('/\n+/', $text);
+        $lines = array_values(array_filter(array_map('trim', $lines)));
+
+        if (count($lines) >= 2) {
+            $kvItems = [];
+            foreach ($lines as $line) {
+                if (preg_match('/^(.{2,40})\s*:\s*(.+)$/u', $line, $m)) {
+                    $kvItems[] = ['key' => trim($m[1]), 'val' => trim($m[2])];
+                }
+            }
+            if (count($kvItems) >= 2) {
+                $html = '<ul class="short-desc-list">';
+                foreach ($kvItems as $item) {
+                    $html .= '<li><strong>' . e($item['key']) . ':</strong> ' . e($item['val']) . '</li>';
+                }
+                $html .= '</ul>';
+                return $html;
+            }
+        }
+
+        // Fallback: wrap in paragraph
+        return '<p>' . e($text) . '</p>';
     }
 
     /**
