@@ -16,7 +16,8 @@ class ImportWooCommerceProducts extends Command
 {
     protected $signature = 'import:woo-products
         {file : Path to the WooCommerce CSV export file}
-        {--purge : Delete ALL existing products, images, categories & brands before importing}';
+        {--purge : Delete ALL existing products, images, categories & brands before importing}
+        {--limit= : Limit number of products to import (for testing)}';
 
     protected $description = 'Import products from a WooCommerce CSV export file';
 
@@ -89,16 +90,24 @@ class ImportWooCommerceProducts extends Command
 
         $this->info("Found {$totalRows} rows in CSV.");
 
+        $limit = $this->option('limit') ? (int) $this->option('limit') : null;
+        if ($limit) {
+            $this->info("⚡ Limiting to {$limit} products (test mode).");
+        }
+
         $successCount = 0;
         $skipCount = 0;
         $errorRows = [];
 
-        $this->output->progressStart($totalRows);
+        $this->output->progressStart($limit ?? $totalRows);
 
         // ── Process each row ────────────────────────────────────────────
         $rowNumber = 1;
         while (($row = fgetcsv($handle)) !== false) {
             $rowNumber++;
+
+            // Check limit
+            if ($limit && $successCount >= $limit) break;
 
             try {
                 // Pad row to match header length
@@ -292,8 +301,8 @@ class ImportWooCommerceProducts extends Command
     }
 
     /**
-     * Sanitize HTML: keep tags for rich content, only remove WP shortcodes
-     * and convert literal \n from CSV to proper HTML line breaks.
+     * Sanitize HTML: keep existing tags, or intelligently structure plain text
+     * from WooCommerce CSV into rich HTML with headings, lists, and paragraphs.
      */
     private function sanitizeHtml(?string $html): ?string
     {
@@ -305,22 +314,116 @@ class ImportWooCommerceProducts extends Command
         // Remove WordPress shortcodes like [caption id="..." width="..."]...[/caption]
         $text = preg_replace('/\[\/?\w+[^\]]*\]/', '', $text);
 
-        // If the text has no HTML tags at all, wrap paragraphs
-        if (strip_tags($text) === $text) {
-            // Convert double newlines to paragraph breaks
-            $paragraphs = preg_split('/\n{2,}/', trim($text));
-            $paragraphs = array_filter(array_map('trim', $paragraphs));
-            if (count($paragraphs) > 1) {
-                $text = '<p>' . implode('</p><p>', $paragraphs) . '</p>';
-            }
-            // Convert remaining single newlines to <br>
-            $text = nl2br($text);
+        // Decode HTML entities
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+
+        // If the text already has HTML block-level tags, just clean up and return
+        if (preg_match('/<(p|div|h[1-6]|ul|ol|table|section|article)\b/i', $text)) {
+            // Remove empty paragraphs
+            $text = preg_replace('/<p>\s*<\/p>/', '', $text);
+            return trim($text) ?: null;
         }
 
-        // Remove empty paragraphs
-        $text = preg_replace('/<p>\s*<\/p>/', '', $text);
+        // ── Plain text → structured HTML ──────────────────────────────
+        // Split into lines
+        $lines = preg_split('/\n+/', trim($text));
+        $lines = array_values(array_filter(array_map('trim', $lines)));
 
-        return trim($text) ?: null;
+        if (empty($lines)) return null;
+
+        $output = [];
+        $currentParagraph = [];
+
+        // Heading keywords (Vietnamese)
+        $headingPatterns = [
+            'thông số kỹ thuật', 'tính năng', 'đặc điểm', 'ưu điểm',
+            'ứng dụng', 'mô tả', 'thông tin', 'chi tiết', 'hướng dẫn',
+            'phụ kiện', 'sản phẩm gồm', 'lưu ý', 'cam kết', 'bảo hành',
+            'chính sách', 'liên hệ',
+        ];
+
+        for ($i = 0; $i < count($lines); $i++) {
+            $line = $lines[$i];
+            $lower = mb_strtolower($line);
+
+            // Skip empty lines
+            if (empty($line)) continue;
+
+            // Detect heading: short line (< 80 chars) that matches keywords or ends with ':'
+            $isHeading = false;
+            if (mb_strlen($line) < 80) {
+                foreach ($headingPatterns as $pattern) {
+                    if (mb_strpos($lower, $pattern) !== false) {
+                        $isHeading = true;
+                        break;
+                    }
+                }
+                // Also treat lines ending with ':' as headings
+                if (!$isHeading && preg_match('/^[^:]{5,60}:\s*$/', $line)) {
+                    $isHeading = true;
+                    $line = rtrim($line, ': ');
+                }
+            }
+
+            if ($isHeading) {
+                // Flush current paragraph
+                if (!empty($currentParagraph)) {
+                    $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+                    $currentParagraph = [];
+                }
+                $output[] = '<h3>' . $line . '</h3>';
+                continue;
+            }
+
+            // Detect key:value lines like "Kích thước: 39 × 12 × 10.3 cm"
+            if (preg_match('/^(.{3,40})\s*:\s*(.+)$/', $line, $m)) {
+                // Check if next lines are also key:value → build a list
+                $listItems = [['key' => trim($m[1]), 'val' => trim($m[2])]];
+
+                while (isset($lines[$i + 1]) && preg_match('/^(.{3,40})\s*:\s*(.+)$/', $lines[$i + 1], $nextM)) {
+                    $listItems[] = ['key' => trim($nextM[1]), 'val' => trim($nextM[2])];
+                    $i++;
+                }
+
+                if (count($listItems) >= 2) {
+                    // Flush current paragraph
+                    if (!empty($currentParagraph)) {
+                        $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+                        $currentParagraph = [];
+                    }
+                    // Build styled list
+                    $output[] = '<ul class="woo-specs">';
+                    foreach ($listItems as $item) {
+                        $output[] = '<li><strong>' . e($item['key']) . ':</strong> ' . e($item['val']) . '</li>';
+                    }
+                    $output[] = '</ul>';
+                    continue;
+                }
+                // Single key:value — just add to paragraph
+            }
+
+            // Regular text — accumulate into paragraph
+            $currentParagraph[] = $line;
+
+            // If accumulated text is long enough, flush as paragraph
+            $totalLen = mb_strlen(implode(' ', $currentParagraph));
+            if ($totalLen > 300) {
+                $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+                $currentParagraph = [];
+            }
+        }
+
+        // Flush remaining paragraph
+        if (!empty($currentParagraph)) {
+            $output[] = '<p>' . implode(' ', $currentParagraph) . '</p>';
+        }
+
+        $result = implode("\n", $output);
+
+        // Remove empty paragraphs
+        $result = preg_replace('/<p>\s*<\/p>/', '', $result);
+
+        return trim($result) ?: null;
     }
 
     private function getOrCreateCategory(?string $categoryString): ?int
