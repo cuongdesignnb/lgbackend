@@ -536,4 +536,99 @@ const icons = {
 .min-h-screen.bg-slate-950 .border-blue-200 {
     border-color: rgba(59, 130, 246, 0.25) !important;
 }
+
+/* ===== RichEditor wrapper dark theme ===== */
+.min-h-screen.bg-slate-950 .rich-editor {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+/* Toolbar row */
+.min-h-screen.bg-slate-950 .rich-editor > div:first-child,
+.min-h-screen.bg-slate-950 .rich-editor .flex.flex-wrap {
+    background-color: rgba(15, 23, 42, 0.9) !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+/* Toolbar divider borders */
+.min-h-screen.bg-slate-950 .rich-editor .border-gray-200 {
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+/* Toolbar buttons */
+.min-h-screen.bg-slate-950 .rich-editor button {
+    color: #94a3b8 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor button:hover {
+    color: #e2e8f0 !important;
+    background-color: rgba(51, 65, 85, 0.5) !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor button.bg-indigo-100,
+.min-h-screen.bg-slate-950 .rich-editor button[class*="bg-indigo"] {
+    color: #67e8f9 !important;
+    background-color: rgba(6, 182, 212, 0.15) !important;
+}
+
+/* Editor content area (TipTap ProseMirror) */
+.min-h-screen.bg-slate-950 .rich-editor .tiptap,
+.min-h-screen.bg-slate-950 .rich-editor .ProseMirror {
+    background-color: rgba(30, 41, 59, 0.6) !important;
+    color: #e2e8f0 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap h2,
+.min-h-screen.bg-slate-950 .rich-editor .tiptap h3,
+.min-h-screen.bg-slate-950 .rich-editor .tiptap h4 {
+    color: #f1f5f9 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap p {
+    color: #cbd5e1 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap a {
+    color: #67e8f9 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap blockquote {
+    border-left-color: #06b6d4 !important;
+    color: #94a3b8 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap code {
+    background-color: rgba(51, 65, 85, 0.5) !important;
+    color: #f87171 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap pre {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap hr {
+    border-top-color: rgba(51, 65, 85, 0.5) !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap table td,
+.min-h-screen.bg-slate-950 .rich-editor .tiptap table th {
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap table th {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    color: #94a3b8 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .tiptap table tr:hover td {
+    background-color: rgba(30, 41, 59, 0.4) !important;
+}
+
+/* Placeholder text */
+.min-h-screen.bg-slate-950 .rich-editor .tiptap .is-editor-empty:first-child::before {
+    color: #475569 !important;
+}
+
+/* Media modal inside dark admin */
+.min-h-screen.bg-slate-950 .rich-editor .bg-white {
+    background-color: #1e293b !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .bg-gray-50 {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .text-gray-900 {
+    color: #f1f5f9 !important;
+}
+.min-h-screen.bg-slate-950 .rich-editor .text-gray-600 {
+    color: #94a3b8 !important;
+}
 </style>
