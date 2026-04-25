@@ -147,9 +147,9 @@ class ImportWooCommerceProducts extends Command
                     $salePrice = null;
                 }
 
-                // Descriptions — strip HTML tags and WordPress shortcodes
-                $shortDesc = $this->cleanHtml($this->getValue($data, ['short description', 'mô tả ngắn', 'post_excerpt']));
-                $desc = $this->cleanHtml($this->getValue($data, ['description', 'mô tả', 'post_content']));
+                // Descriptions — keep HTML for rich content, only strip WP shortcodes
+                $shortDesc = $this->sanitizeHtml($this->getValue($data, ['short description', 'mô tả ngắn', 'post_excerpt']));
+                $desc = $this->sanitizeHtml($this->getValue($data, ['description', 'mô tả', 'post_content']));
 
                 $stock = max(0, (int) $this->getValue($data, ['stock', 'tồn kho', '_stock', 'in stock?']));
                 $weight = (int) ((float) $this->getValue($data, ['weight (kg)', 'trọng lượng (kg)', '_weight', 'weight (lbs)']) * 1000); // kg to grams if needed
@@ -178,7 +178,7 @@ class ImportWooCommerceProducts extends Command
                         'slug' => $slug,
                         'category_id' => $categoryId,
                         'brand_id' => $brandId,
-                        'short_description' => $shortDesc ? Str::limit($shortDesc, 497) : null,
+                        'short_description' => $shortDesc ? Str::limit(strip_tags($shortDesc), 497) : null,
                         'description' => $desc,
                         'price' => $price,
                         'sale_price' => $salePrice,
@@ -188,7 +188,7 @@ class ImportWooCommerceProducts extends Command
                         'warranty_months' => $warrantyMonths,
                         'specifications_text' => $this->extractSpecifications($data),
                         'meta_title' => Str::limit($name, 250),
-                        'meta_description' => $shortDesc ? Str::limit($shortDesc, 250) : null,
+                        'meta_description' => $shortDesc ? Str::limit(strip_tags($shortDesc), 250) : null,
                     ]
                 );
 
@@ -271,6 +271,38 @@ class ImportWooCommerceProducts extends Command
 
         // Normalize whitespace: replace multiple spaces/newlines with single space
         $text = preg_replace('/\s+/', ' ', $text);
+
+        return trim($text) ?: null;
+    }
+
+    /**
+     * Sanitize HTML: keep tags for rich content, only remove WP shortcodes
+     * and convert literal \n from CSV to proper HTML line breaks.
+     */
+    private function sanitizeHtml(?string $html): ?string
+    {
+        if (empty($html)) return null;
+
+        // Replace literal \n strings (from CSV) with actual newlines
+        $text = str_replace(['\\n', '\\r', '\\t'], ["\n", "\r", "\t"], $html);
+
+        // Remove WordPress shortcodes like [caption id="..." width="..."]...[/caption]
+        $text = preg_replace('/\[\/?\w+[^\]]*\]/', '', $text);
+
+        // If the text has no HTML tags at all, wrap paragraphs
+        if (strip_tags($text) === $text) {
+            // Convert double newlines to paragraph breaks
+            $paragraphs = preg_split('/\n{2,}/', trim($text));
+            $paragraphs = array_filter(array_map('trim', $paragraphs));
+            if (count($paragraphs) > 1) {
+                $text = '<p>' . implode('</p><p>', $paragraphs) . '</p>';
+            }
+            // Convert remaining single newlines to <br>
+            $text = nl2br($text);
+        }
+
+        // Remove empty paragraphs
+        $text = preg_replace('/<p>\s*<\/p>/', '', $text);
 
         return trim($text) ?: null;
     }
