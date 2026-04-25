@@ -788,7 +788,7 @@ class ImportWooCommerceProducts extends Command
 
                 // Skip if already downloaded
                 if (Storage::disk('public')->exists($storagePath)) {
-                    $fullUrl = Storage::url($storagePath);
+                    $fullUrl = rtrim(config('app.url'), '/') . Storage::url($storagePath);
                     $description = str_replace($originalUrl, $fullUrl, $description);
                     continue;
                 }
@@ -818,7 +818,7 @@ class ImportWooCommerceProducts extends Command
                 }
 
                 Storage::disk('public')->put($storagePath, $imageContent);
-                $fullUrl = Storage::url($storagePath);
+                $fullUrl = rtrim(config('app.url'), '/') . Storage::url($storagePath);
                 $description = str_replace($originalUrl, $fullUrl, $description);
             } catch (\Exception $e) {
                 // Skip failed image downloads
