@@ -163,11 +163,11 @@ class ImportWooCommerceProducts extends Command
                 $brandId = $this->getOrCreateBrand($brandString);
 
                 // Warranty (try to extract from short description or attributes)
-                $warrantyMonths = null;
+                $warrantyMonths = 0;
                 $warrantyStr = $this->getValue($data, ['warranty', 'bảo hành']);
                 if ($warrantyStr) {
                     preg_match('/(\d+)/', $warrantyStr, $m);
-                    $warrantyMonths = isset($m[1]) ? (int) $m[1] : null;
+                    $warrantyMonths = isset($m[1]) ? (int) $m[1] : 0;
                 }
 
                 // ── Create Product ──────────────────────────────────────
@@ -257,8 +257,11 @@ class ImportWooCommerceProducts extends Command
     {
         if (empty($html)) return null;
 
+        // Replace literal \n strings (from CSV) with actual newlines first
+        $text = str_replace(['\n', '\r', '\t'], ["\n", "\r", "\t"], $html);
+
         // Remove WordPress shortcodes like [caption id="..." align="..." width="..."]...[/caption]
-        $text = preg_replace('/\[\/?\w+[^\]]*\]/', '', $html);
+        $text = preg_replace('/\[\/?\w+[^\]]*\]/', '', $text);
 
         // Remove HTML tags but keep text content
         $text = strip_tags($text);
