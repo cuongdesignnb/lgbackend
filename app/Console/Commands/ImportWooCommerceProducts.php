@@ -166,7 +166,11 @@ class ImportWooCommerceProducts extends Command
                 // Descriptions — keep HTML for rich content, only strip WP shortcodes
                 $shortDescRaw = $this->getValue($data, ['short description', 'mô tả ngắn', 'post_excerpt']);
                 $shortDesc = $this->formatShortDescription($shortDescRaw);
-                $desc = $this->sanitizeHtml($this->getValue($data, ['description', 'mô tả', 'post_content']));
+                $descRaw = $this->getValue($data, ['description', 'mô tả', 'post_content']);
+
+                // Extract specifications from description text
+                $extractedSpecs = $this->extractSpecsFromDescription($descRaw);
+                $desc = $this->sanitizeHtml($extractedSpecs['description']);
 
                 $stock = max(0, (int) $this->getValue($data, ['stock', 'tồn kho', '_stock', 'in stock?']));
                 $weight = (int) ((float) $this->getValue($data, ['weight (kg)', 'trọng lượng (kg)', '_weight', 'weight (lbs)']) * 1000); // kg to grams if needed
@@ -196,6 +200,11 @@ class ImportWooCommerceProducts extends Command
                     }
                 }
 
+                // Merge specs from attributes + description
+                $attrSpecs = $this->extractSpecifications($data);
+                $descSpecs = $extractedSpecs['specs'];
+                $allSpecs = trim(($attrSpecs ? $attrSpecs . "\n" : '') . ($descSpecs ?: ''));
+
                 // ── Create Product ──────────────────────────────────────
                 $product = Product::updateOrCreate(
                     ['sku' => $sku],
@@ -212,7 +221,7 @@ class ImportWooCommerceProducts extends Command
                         'is_active' => true,
                         'weight' => $weight > 0 ? $weight : null,
                         'warranty_months' => $warrantyMonths,
-                        'specifications_text' => $this->extractSpecifications($data),
+                        'specifications_text' => !empty($allSpecs) ? $allSpecs : null,
                         'meta_title' => Str::limit($name, 250),
                         'meta_description' => $shortDesc ? Str::limit(strip_tags($shortDesc), 250) : null,
                     ]
@@ -584,6 +593,111 @@ class ImportWooCommerceProducts extends Command
         }
 
         return !empty($specs) ? implode("\n", $specs) : null;
+    }
+
+    /**
+     * Extract "Thông Số Kỹ Thuật" section from description text.
+     * Returns ['description' => cleaned text, 'specs' => "Key: Value\nKey: Value" format]
+     */
+    private function extractSpecsFromDescription(?string $raw): array
+    {
+        $result = ['description' => $raw, 'specs' => null];
+        if (empty($raw)) return $result;
+
+        // Replace literal \n from CSV
+        $text = str_replace(['\\n', '\\r', '\\t'], ["\n", "\r", "\t"], $raw);
+
+        // Heading patterns that indicate a specs section (Vietnamese)
+        $specHeadings = [
+            'thông số kỹ thuật',
+            'thông số sản phẩm',
+            'thông tin kỹ thuật',
+            'chi tiết kỹ thuật',
+            'cấu hình',
+        ];
+
+        $headingPattern = implode('|', array_map(function ($h) {
+            return preg_quote($h, '/');
+        }, $specHeadings));
+
+        // Try to find the specs section — look for the heading followed by key:value lines
+        // Support both plain text and HTML headings
+        $pattern = '/(?:^|\n)\s*(?:<h[1-6][^>]*>)?\s*(' . $headingPattern . ')\s*(?:<\/h[1-6]>)?\s*(?:\n|$)([\s\S]*?)(?=(?:\n\s*(?:<h[1-6][^>]*>)?\s*(?:' . $headingPattern . '|ứng dụng|ưu điểm|tính năng|mô tả|hướng dẫn|lưu ý|cam kết|liên hệ|đặc điểm)\s*(?:<\/h[1-6]>)?\s*\n)|\z)/iu';
+
+        if (preg_match($pattern, $text, $m, PREG_OFFSET_CAPTURE)) {
+            $fullMatch = $m[0][0];
+            $specBody = $m[2][0];
+
+            // Parse spec lines from the body
+            $specLines = preg_split('/\n+/', trim($specBody));
+            $specs = [];
+
+            foreach ($specLines as $line) {
+                $line = strip_tags(trim($line));
+                if (empty($line)) continue;
+
+                // Match "Key: Value" or "Key : Value"
+                if (preg_match('/^(.{2,50}?)\s*:\s*(.+)$/u', $line, $kvMatch)) {
+                    $key = trim($kvMatch[1]);
+                    $val = trim($kvMatch[2]);
+                    if (!empty($key) && !empty($val)) {
+                        $specs[] = "{$key}: {$val}";
+                    }
+                }
+            }
+
+            if (!empty($specs)) {
+                // Remove the specs section from description
+                $cleanDesc = substr_replace($text, '', $m[0][1], strlen($fullMatch));
+                $result['description'] = trim($cleanDesc);
+                $result['specs'] = implode("\n", $specs);
+            }
+        }
+
+        // If no heading match, try a simpler approach: look for consecutive key:value lines
+        // that could be specs (at least 3 consecutive lines with key:value pattern)
+        if (empty($result['specs'])) {
+            $lines = preg_split('/\n+/', $text);
+            $kvRuns = [];
+            $currentRun = [];
+
+            foreach ($lines as $i => $line) {
+                $line = strip_tags(trim($line));
+                if (preg_match('/^(.{2,40}?)\s*:\s*(.+)$/u', $line, $kvM)) {
+                    $currentRun[] = ['line' => $i, 'key' => trim($kvM[1]), 'val' => trim($kvM[2])];
+                } else {
+                    if (count($currentRun) >= 3) {
+                        $kvRuns[] = $currentRun;
+                    }
+                    $currentRun = [];
+                }
+            }
+            if (count($currentRun) >= 3) {
+                $kvRuns[] = $currentRun;
+            }
+
+            // Take the longest run as specs
+            if (!empty($kvRuns)) {
+                usort($kvRuns, fn($a, $b) => count($b) - count($a));
+                $bestRun = $kvRuns[0];
+                $specs = [];
+                $linesToRemove = [];
+                foreach ($bestRun as $item) {
+                    $specs[] = "{$item['key']}: {$item['val']}";
+                    $linesToRemove[] = $item['line'];
+                }
+
+                // Remove spec lines from description
+                $allLines = preg_split('/\n/', $text);
+                foreach ($linesToRemove as $li) {
+                    unset($allLines[$li]);
+                }
+                $result['description'] = trim(implode("\n", $allLines));
+                $result['specs'] = implode("\n", $specs);
+            }
+        }
+
+        return $result;
     }
 
     private function processImages(Product $product, string $imageUrlsString): void
