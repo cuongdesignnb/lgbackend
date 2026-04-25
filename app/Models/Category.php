@@ -18,12 +18,14 @@ class Category extends Model
         'icon',
         'sort_order',
         'is_active',
+        'show_on_homepage',
         'meta_title',
         'meta_description',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'show_on_homepage' => 'boolean',
         'sort_order' => 'integer',
     ];
 

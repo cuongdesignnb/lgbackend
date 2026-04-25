@@ -31,13 +31,26 @@ class CategoryController extends Controller
      */
     public function homepageSections(): JsonResponse
     {
-        $parents = Category::with(['children' => function ($q) {
+        $query = Category::with(['children' => function ($q) {
                 $q->where('is_active', true)->orderBy('sort_order');
             }])
             ->whereNull('parent_id')
             ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
+            ->orderBy('sort_order');
+
+        // Only show categories marked for homepage; fallback to first 6 if none marked
+        $hasHomepageCategories = Category::whereNull('parent_id')
+            ->where('is_active', true)
+            ->where('show_on_homepage', true)
+            ->exists();
+
+        if ($hasHomepageCategories) {
+            $query->where('show_on_homepage', true);
+        } else {
+            $query->limit(6);
+        }
+
+        $parents = $query->get();
 
         $sections = [];
 

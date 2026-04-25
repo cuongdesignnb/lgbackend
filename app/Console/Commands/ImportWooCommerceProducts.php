@@ -140,10 +140,17 @@ class ImportWooCommerceProducts extends Command
                     $slug = $slug . '-' . substr(md5($sku), 0, 6);
                 }
 
-                $price = $this->parsePrice($this->getValue($data, ['regular price', 'giá bán thường', 'giá gốc', '_regular_price']));
+                $price = $this->parsePrice($this->getValue($data, ['regular price', 'giá bán thường', 'giá gốc', '_regular_price', 'price', 'giá']));
                 $salePrice = $this->parsePrice($this->getValue($data, ['sale price', 'giá khuyến mãi', '_sale_price']));
 
-                if ($salePrice <= 0 || ($salePrice >= $price && $price > 0)) {
+                // If regular price is 0 but sale_price has value, swap them
+                if ($price <= 0 && $salePrice > 0) {
+                    $price = $salePrice;
+                    $salePrice = null;
+                }
+
+                // Clear sale price if it's invalid
+                if ($salePrice !== null && ($salePrice <= 0 || $salePrice >= $price)) {
                     $salePrice = null;
                 }
 
@@ -245,6 +252,15 @@ class ImportWooCommerceProducts extends Command
     private function parsePrice(?string $value): float
     {
         if (empty($value)) return 0;
+        // Handle Vietnamese format: 3.360.000 (dots as thousands) or 3,360,000
+        // If the string has multiple dots, they are thousands separators
+        if (substr_count($value, '.') > 1) {
+            $value = str_replace('.', '', $value);
+        }
+        // If the string has commas followed by 3 digits, those are thousands separators  
+        if (preg_match('/,\d{3}/', $value)) {
+            $value = str_replace(',', '', $value);
+        }
         // Remove everything except digits and dots
         $value = preg_replace('/[^0-9.]/', '', $value);
         return (float) $value;

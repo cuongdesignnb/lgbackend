@@ -60,6 +60,7 @@ class CategoryController extends Controller
             'image' => 'nullable|string',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
+            'show_on_homepage' => 'boolean',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
         ]);
@@ -100,6 +101,7 @@ class CategoryController extends Controller
             'image' => 'nullable|string',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
+            'show_on_homepage' => 'boolean',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
         ]);
