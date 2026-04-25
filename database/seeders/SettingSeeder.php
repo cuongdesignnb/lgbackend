@@ -24,7 +24,7 @@ class SettingSeeder extends Seeder
                 'value' => 'Bán PC, Laptop & Linh kiện máy tính',
                 'group' => 'general',
                 'type' => 'text',
-                'label' => 'Slogan',
+                'label' => 'Khẩu hiệu (Slogan)',
                 'is_public' => true,
             ],
             [
@@ -166,7 +166,7 @@ class SettingSeeder extends Seeder
                 'value' => 'Lgtech - Bán PC, Laptop & Linh kiện máy tính chính hãng',
                 'group' => 'seo',
                 'type' => 'text',
-                'label' => 'SEO Title mặc định',
+                'label' => 'Tiêu đề SEO mặc định',
                 'is_public' => true,
             ],
             [
@@ -174,7 +174,7 @@ class SettingSeeder extends Seeder
                 'value' => 'Lgtech - Chuyên cung cấp PC Gaming, Laptop, linh kiện máy tính chính hãng giá tốt. Build PC online, kiểm tra tương thích tự động.',
                 'group' => 'seo',
                 'type' => 'textarea',
-                'label' => 'SEO Description mặc định',
+                'label' => 'Mô tả SEO mặc định',
                 'is_public' => true,
             ],
             [
@@ -182,7 +182,7 @@ class SettingSeeder extends Seeder
                 'value' => 'pc gaming, laptop, linh kiện máy tính, build pc, mua pc, Lgtech',
                 'group' => 'seo',
                 'type' => 'text',
-                'label' => 'SEO Keywords mặc định',
+                'label' => 'Từ khóa SEO mặc định',
                 'is_public' => true,
             ],
             [
@@ -190,7 +190,7 @@ class SettingSeeder extends Seeder
                 'value' => '',
                 'group' => 'seo',
                 'type' => 'image',
-                'label' => 'OG Image mặc định',
+                'label' => 'Ảnh chia sẻ mặc định (OG Image)',
                 'is_public' => true,
             ],
             [
@@ -224,7 +224,7 @@ class SettingSeeder extends Seeder
                 'value' => '1',
                 'group' => 'homepage',
                 'type' => 'boolean',
-                'label' => 'Auto-play banner hero',
+                'label' => 'Tự động chuyển banner trang chủ',
                 'is_public' => true,
             ],
             [
@@ -232,7 +232,7 @@ class SettingSeeder extends Seeder
                 'value' => '5000',
                 'group' => 'homepage',
                 'type' => 'number',
-                'label' => 'Thời gian chuyển slide (ms)',
+                'label' => 'Thời gian chuyển slide (mili giây)',
                 'is_public' => true,
             ],
             [
@@ -240,7 +240,7 @@ class SettingSeeder extends Seeder
                 'value' => '8',
                 'group' => 'homepage',
                 'type' => 'number',
-                'label' => 'Số sản phẩm mỗi mục',
+                'label' => 'Số sản phẩm mỗi mục trên trang chủ',
                 'is_public' => true,
             ],
             [
@@ -248,7 +248,7 @@ class SettingSeeder extends Seeder
                 'value' => '1',
                 'group' => 'homepage',
                 'type' => 'boolean',
-                'label' => 'Hiện carousel thương hiệu',
+                'label' => 'Hiện thanh thương hiệu trên trang chủ',
                 'is_public' => true,
             ],
             [
@@ -290,7 +290,7 @@ class SettingSeeder extends Seeder
                 'value' => '1',
                 'group' => 'payment',
                 'type' => 'boolean',
-                'label' => 'Cho phép COD',
+                'label' => 'Cho phép thanh toán khi nhận hàng (COD)',
                 'is_public' => true,
             ],
 

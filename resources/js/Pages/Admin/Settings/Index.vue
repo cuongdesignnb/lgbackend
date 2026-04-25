@@ -2,6 +2,7 @@
 import { useForm, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import MediaPicker from '@/Components/MediaPicker.vue';
 
 const props = defineProps({
     settings: Object,
@@ -30,6 +31,13 @@ const groupIcons = {
     payment: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
     shipping: 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0',
     ai: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+};
+
+// Dimension hints for image fields
+const imageDimensionHints = {
+    site_logo: 'Khuyến nghị: 200×60px, nền trong suốt (PNG/SVG)',
+    site_favicon: 'Khuyến nghị: 32×32px hoặc 64×64px (PNG/ICO)',
+    seo_og_image: 'Khuyến nghị: 1200×630px (JPG/PNG)',
 };
 
 const groups = computed(() => Object.keys(props.settings || {}));
@@ -137,18 +145,47 @@ function getSettingsForGroup(group) {
                                         <span v-if="!item.is_public" class="text-xs text-slate-500 ml-1">(nội bộ)</span>
                                     </label>
 
-                                    <!-- Text / Image URL input -->
-                                    <template v-if="item.type === 'text' || item.type === 'image'">
+                                    <!-- Image — use MediaPicker -->
+                                    <template v-if="item.type === 'image'">
+                                        <div class="space-y-2">
+                                            <!-- Preview + Manual URL -->
+                                            <div class="flex items-start gap-4">
+                                                <div v-if="formData[item.key]" class="w-24 h-16 rounded-lg border border-slate-700/50 bg-slate-800/40 p-1.5 flex items-center justify-center flex-shrink-0">
+                                                    <img :src="formData[item.key]" class="max-w-full max-h-full object-contain" />
+                                                </div>
+                                                <div class="flex-1 space-y-2">
+                                                    <input
+                                                        v-model="formData[item.key]"
+                                                        type="text"
+                                                        :placeholder="'URL hình ảnh hoặc chọn từ thư viện...'"
+                                                        class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                                    />
+                                                    <div class="flex items-center gap-2">
+                                                        <MediaPicker
+                                                            :modelValue="formData[item.key]"
+                                                            @update:modelValue="formData[item.key] = $event"
+                                                            :label="''"
+                                                        />
+                                                        <button v-if="formData[item.key]" type="button" @click="formData[item.key] = ''" class="text-xs text-red-400 hover:text-red-300">Xóa</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Dimension hint -->
+                                            <p v-if="imageDimensionHints[item.key]" class="text-xs text-amber-400/70 flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                {{ imageDimensionHints[item.key] }}
+                                            </p>
+                                        </div>
+                                    </template>
+
+                                    <!-- Text input -->
+                                    <template v-else-if="item.type === 'text'">
                                         <input
                                             v-model="formData[item.key]"
                                             type="text"
                                             :placeholder="item.label"
                                             class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                         />
-                                        <!-- Image preview -->
-                                        <div v-if="item.type === 'image' && formData[item.key]" class="mt-2">
-                                            <img :src="formData[item.key]" class="h-12 object-contain rounded border border-slate-800/60 p-1 bg-slate-800/40" />
-                                        </div>
                                     </template>
 
                                     <!-- Color picker with hex input -->
