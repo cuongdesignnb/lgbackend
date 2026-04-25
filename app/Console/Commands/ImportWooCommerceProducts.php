@@ -58,7 +58,7 @@ class ImportWooCommerceProducts extends Command
         // Normalize headers
         $normalizedHeaders = array_map(function ($header) {
             // Remove BOM if exists
-            $header = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $header);
+            $header = preg_replace('/^\xEF\xBB\xBF/', '', $header);
             return strtolower(trim($header));
         }, $headers);
 
