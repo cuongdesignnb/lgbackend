@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\FilterController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\UserController;
 
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\AiArticleController;
 use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\Admin\CatalogueController;
+use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,8 +43,15 @@ Route::prefix('payment')->name('payment.')->group(function () {
     Route::post('/ipn', [PaymentController::class, 'ipn'])->name('ipn');
 });
 
-// Admin routes
+// ─── Admin Auth (public) ────────────────────────────────────────────────────
 Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
+    Route::get('login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('login', [AuthController::class, 'login'])->name('login.submit');
+    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+// ─── Admin routes (protected) ───────────────────────────────────────────────
+Route::prefix('admin')->middleware(['web', 'admin'])->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Products - Excel Import/Export
@@ -132,4 +141,7 @@ Route::prefix('admin')->middleware(['web'])->name('admin.')->group(function () {
     Route::post('ai-articles/{aiArticle}/run', [AiArticleController::class, 'run'])->name('ai-articles.run');
     Route::delete('ai-articles/{aiArticle}', [AiArticleController::class, 'destroy'])->name('ai-articles.destroy');
     Route::post('ai-articles/generate-single', [AiArticleController::class, 'generateSingle'])->name('ai-articles.generate-single');
+
+    // Users & Roles
+    Route::resource('users', UserController::class);
 });

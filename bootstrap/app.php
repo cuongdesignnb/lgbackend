@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\CorsMiddleware;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             HandleInertiaRequests::class,
+        ]);
+
+        // Named middleware aliases
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
         ]);
 
         // Add CORS middleware for API routes

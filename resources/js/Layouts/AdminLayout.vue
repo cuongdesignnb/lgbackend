@@ -67,6 +67,7 @@ const navGroups = [
         label: 'Hệ thống',
         key: 'system',
         items: [
+            { name: 'Tài khoản', href: '/admin/users', icon: 'user' },
             { name: 'Menu', href: '/admin/menus', icon: 'menu' },
             { name: 'Cài đặt', href: '/admin/settings', icon: 'settings' },
         ],
