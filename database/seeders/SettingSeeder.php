@@ -319,6 +319,73 @@ class SettingSeeder extends Seeder
                 'label' => 'Phí ship nhanh (VNĐ)',
                 'is_public' => true,
             ],
+
+            // ─── Email / SMTP ──────────────────────────────────
+            [
+                'key' => 'smtp_host',
+                'value' => '',
+                'group' => 'email',
+                'type' => 'text',
+                'label' => 'SMTP Host',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'smtp_port',
+                'value' => '587',
+                'group' => 'email',
+                'type' => 'number',
+                'label' => 'SMTP Port',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'smtp_username',
+                'value' => '',
+                'group' => 'email',
+                'type' => 'text',
+                'label' => 'SMTP Username',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'smtp_password',
+                'value' => '',
+                'group' => 'email',
+                'type' => 'password',
+                'label' => 'SMTP Password',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'smtp_encryption',
+                'value' => 'tls',
+                'group' => 'email',
+                'type' => 'select',
+                'label' => 'Mã hóa (Encryption)',
+                'options' => json_encode(['choices' => ['tls', 'ssl', 'none']]),
+                'is_public' => false,
+            ],
+            [
+                'key' => 'smtp_from_address',
+                'value' => '',
+                'group' => 'email',
+                'type' => 'text',
+                'label' => 'Email người gửi (From Address)',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'smtp_from_name',
+                'value' => '',
+                'group' => 'email',
+                'type' => 'text',
+                'label' => 'Tên người gửi (From Name)',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'email_order_enabled',
+                'value' => '1',
+                'group' => 'email',
+                'type' => 'boolean',
+                'label' => 'Gửi email xác nhận đơn hàng',
+                'is_public' => false,
+            ],
         ];
 
         foreach ($settings as $setting) {

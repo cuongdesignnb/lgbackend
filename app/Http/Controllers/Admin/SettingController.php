@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\TestMail;
 use App\Models\Setting;
+use App\Services\SmtpConfigService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class SettingController extends Controller
@@ -41,5 +44,26 @@ class SettingController extends Controller
 
         return redirect()->route('admin.settings.index')
             ->with('success', 'Cập nhật cài đặt thành công');
+    }
+
+    /**
+     * Send a test email to verify SMTP settings.
+     */
+    public function sendTestEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|max:255',
+        ]);
+
+        try {
+            // Apply SMTP settings from database
+            SmtpConfigService::apply();
+
+            Mail::to($request->input('email'))->send(new TestMail());
+
+            return back()->with('success', 'Email test đã được gửi thành công đến ' . $request->input('email'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gửi email thất bại: ' . $e->getMessage());
+        }
     }
 }

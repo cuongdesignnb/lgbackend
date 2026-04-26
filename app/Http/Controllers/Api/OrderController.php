@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderConfirmation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Cart;
+use App\Models\Setting;
 use App\Models\Transaction;
+use App\Services\SmtpConfigService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
@@ -133,6 +137,26 @@ class OrderController extends Controller
                 Cart::where('user_id', $request->user()->id)->delete();
             } else {
                 Cart::where('session_id', session()->getId())->delete();
+            }
+
+            // Send order confirmation email (if enabled in settings)
+            $emailEnabled = Setting::get('email_order_enabled', '1');
+            if ($validated['customer_email'] && ($emailEnabled === '1' || $emailEnabled === true)) {
+                try {
+                    SmtpConfigService::apply();
+                    $order->load('items.product');
+                    Mail::to($validated['customer_email'])->send(new OrderConfirmation($order));
+                    Log::info('Order confirmation email sent', [
+                        'order_number' => $order->order_number,
+                        'email' => $validated['customer_email'],
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send order confirmation email', [
+                        'order_number' => $order->order_number,
+                        'email' => $validated['customer_email'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             // Generate payment data for SePay

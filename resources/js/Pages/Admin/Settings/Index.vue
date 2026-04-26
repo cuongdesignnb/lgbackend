@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, Link } from '@inertiajs/vue3';
+import { useForm, Link, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import MediaPicker from '@/Components/MediaPicker.vue';
@@ -18,6 +18,7 @@ const groupLabels = {
     homepage: 'Trang chủ',
     payment: 'Thanh toán',
     shipping: 'Vận chuyển',
+    email: 'Email / SMTP',
     ai: 'AI (ChatGPT / Gemini)',
 };
 
@@ -30,6 +31,7 @@ const groupIcons = {
     homepage: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
     payment: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
     shipping: 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0',
+    email: 'M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75',
     ai: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
 };
 
@@ -57,6 +59,7 @@ function buildFormData() {
 const formData = ref(buildFormData());
 const processing = ref(false);
 const flash = ref(null);
+const flashType = ref('success'); // 'success' or 'error'
 
 function submit() {
     processing.value = true;
@@ -75,6 +78,7 @@ function submit() {
     form.put('/admin/settings', {
         preserveScroll: true,
         onSuccess: () => {
+            flashType.value = 'success';
             flash.value = 'Đã lưu cài đặt thành công!';
             setTimeout(() => { flash.value = null; }, 3000);
         },
@@ -86,6 +90,45 @@ function submit() {
 
 function getSettingsForGroup(group) {
     return props.settings?.[group] || [];
+}
+
+// ─── Test Email ─────────────────────────────────────────────
+const testEmail = ref('');
+const sendingTestEmail = ref(false);
+
+function sendTestEmail() {
+    if (!testEmail.value) return;
+    sendingTestEmail.value = true;
+
+    router.post('/admin/settings/test-email', {
+        email: testEmail.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            if (page.props.flash?.error) {
+                flashType.value = 'error';
+                flash.value = page.props.flash.error;
+            } else {
+                flashType.value = 'success';
+                flash.value = page.props.flash?.success || 'Email test đã được gửi!';
+            }
+            setTimeout(() => { flash.value = null; }, 5000);
+        },
+        onError: (errors) => {
+            flashType.value = 'error';
+            flash.value = errors.email || 'Có lỗi xảy ra khi gửi email test.';
+            setTimeout(() => { flash.value = null; }, 5000);
+        },
+        onFinish: () => {
+            sendingTestEmail.value = false;
+        },
+    });
+}
+
+// Password visibility toggle state
+const passwordVisible = ref({});
+function togglePasswordVisibility(key) {
+    passwordVisible.value[key] = !passwordVisible.value[key];
 }
 </script>
 
@@ -100,9 +143,13 @@ function getSettingsForGroup(group) {
             </div>
         </div>
 
-        <!-- Success flash -->
-        <div v-if="flash" class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm flex items-center gap-2">
-            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <!-- Success/Error flash -->
+        <div v-if="flash" class="mb-4 p-3 rounded-lg text-sm flex items-center gap-2 transition-all"
+             :class="flashType === 'success'
+                 ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                 : 'bg-red-500/10 border border-red-500/20 text-red-400'">
+            <svg v-if="flashType === 'success'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {{ flash }}
         </div>
 
@@ -175,6 +222,28 @@ function getSettingsForGroup(group) {
                                                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                 {{ imageDimensionHints[item.key] }}
                                             </p>
+                                        </div>
+                                    </template>
+
+                                    <!-- Password input (for SMTP password etc.) -->
+                                    <template v-else-if="item.type === 'password'">
+                                        <div class="relative">
+                                            <input
+                                                v-model="formData[item.key]"
+                                                :type="passwordVisible[item.key] ? 'text' : 'password'"
+                                                :placeholder="item.label"
+                                                class="w-full border border-slate-700/50 rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                            />
+                                            <button type="button" @click="togglePasswordVisibility(item.key)"
+                                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1">
+                                                <svg v-if="!passwordVisible[item.key]" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                                </svg>
+                                            </button>
                                         </div>
                                     </template>
 
@@ -261,6 +330,44 @@ function getSettingsForGroup(group) {
                                     />
 
                                     <p class="text-xs text-slate-500 mt-1">{{ item.key }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Test Email Section (only for email group) -->
+                            <div v-if="group === 'email'" class="px-6 pb-6">
+                                <div class="border-t border-slate-800/40 pt-5 mt-2">
+                                    <h5 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                        </svg>
+                                        Gửi email test
+                                    </h5>
+                                    <p class="text-xs text-slate-500 mb-3">
+                                        Lưu cài đặt SMTP trước, sau đó nhập địa chỉ email để kiểm tra gửi mail.
+                                    </p>
+                                    <div class="flex gap-3">
+                                        <input
+                                            v-model="testEmail"
+                                            type="email"
+                                            placeholder="admin@example.com"
+                                            class="flex-1 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="sendTestEmail"
+                                            :disabled="sendingTestEmail || !testEmail"
+                                            class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-semibold disabled:opacity-50 transition-colors flex items-center gap-2"
+                                        >
+                                            <svg v-if="sendingTestEmail" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                            </svg>
+                                            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                            </svg>
+                                            {{ sendingTestEmail ? 'Đang gửi...' : 'Gửi test' }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

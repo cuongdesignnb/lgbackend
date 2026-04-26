@@ -132,6 +132,7 @@ Route::prefix('admin')->middleware(['web', 'admin'])->name('admin.')->group(func
     // Settings
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::post('settings/test-email', [SettingController::class, 'sendTestEmail'])->name('settings.test-email');
 
     // AI Articles
     Route::get('ai-articles', [AiArticleController::class, 'index'])->name('ai-articles.index');
