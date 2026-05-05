@@ -21,12 +21,18 @@ class BannerController extends Controller
         }
 
         $banners = $query->get()->map(function ($banner) {
+            $image = $banner->image;
+            // Convert relative storage paths to full URLs so the frontend (different domain) can load them
+            if ($image && str_starts_with($image, '/storage/')) {
+                $image = rtrim(config('app.url'), '/') . $image;
+            }
+
             return [
                 'id' => $banner->id,
                 'title' => $banner->title,
                 'description' => $banner->description,
                 'badge' => $banner->badge,
-                'image' => $banner->image,
+                'image' => $image,
                 'link' => $banner->link,
                 'position' => $banner->position,
                 'sort_order' => $banner->sort_order,
