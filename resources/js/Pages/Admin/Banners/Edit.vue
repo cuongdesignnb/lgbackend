@@ -8,6 +8,7 @@ const props = defineProps({ banner: Object });
 const imagePreview = ref(null);
 
 const form = useForm({
+    _method: 'put',
     title: props.banner.title || '',
     description: props.banner.description || '',
     badge: props.banner.badge || '',
@@ -45,7 +46,6 @@ function removeImage() {
 function submit() {
     form.post(`/admin/banners/${props.banner.id}`, {
         forceFormData: true,
-        _method: 'put',
     });
 }
 
