@@ -232,17 +232,17 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
                     <form @submit.prevent="saveSettings" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-1">Tên</label>
-                            <input v-model="settingsForm.name" type="text" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                            <input v-model="settingsForm.name" type="text" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-1">Vị trí</label>
-                            <select v-model="settingsForm.location" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                            <select v-model="settingsForm.location" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                 <option v-for="loc in locations" :key="loc.value" :value="loc.value">{{ loc.label }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-1">Mô tả</label>
-                            <textarea v-model="settingsForm.description" rows="2" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50" />
+                            <textarea v-model="settingsForm.description" rows="2" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50" />
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="checkbox" v-model="settingsForm.is_active" id="settings_active" class="rounded border-slate-700/50 text-cyan-500">
@@ -301,12 +301,12 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Tiêu đề *</label>
-                                    <input v-model="itemForm.title" type="text" required class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50" placeholder="Tên hiển thị">
+                                    <input v-model="itemForm.title" type="text" required class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50" placeholder="Tên hiển thị">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Loại</label>
-                                    <select v-model="itemForm.type" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                                    <select v-model="itemForm.type" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                         <option value="custom">Tùy chỉnh (URL)</option>
                                         <option value="category">Danh mục</option>
                                         <option value="page">Trang</option>
@@ -315,7 +315,7 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
 
                                 <div v-if="itemForm.type === 'category'">
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Danh mục</label>
-                                    <select v-model="itemForm.category_id" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                                    <select v-model="itemForm.category_id" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                         <option :value="null">-- Chọn --</option>
                                         <option v-for="cat in flatCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                                     </select>
@@ -323,12 +323,12 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
 
                                 <div v-if="itemForm.type !== 'category'" class="col-span-2">
                                     <label class="block text-sm font-medium text-slate-300 mb-1">URL</label>
-                                    <input v-model="itemForm.url" type="text" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50" placeholder="/categories/cpu">
+                                    <input v-model="itemForm.url" type="text" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50" placeholder="/categories/cpu">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Menu cha</label>
-                                    <select v-model="itemForm.parent_id" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                                    <select v-model="itemForm.parent_id" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                         <option :value="null">— Cấp cao nhất —</option>
                                         <option v-for="fi in flatItems" :key="fi.id" :value="fi.id">{{ fi.title }}</option>
                                     </select>
@@ -336,13 +336,13 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Thứ tự</label>
-                                    <input v-model.number="itemForm.sort_order" type="number" min="0" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                                    <input v-model.number="itemForm.sort_order" type="number" min="0" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Icon (emoji)</label>
                                     <div class="flex gap-2">
-                                        <input v-model="itemForm.icon" type="text" class="flex-1 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50" placeholder="🖥️">
+                                        <input v-model="itemForm.icon" type="text" class="flex-1 bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50" placeholder="🖥️">
                                     </div>
                                     <div class="flex flex-wrap gap-1 mt-1.5">
                                         <button
@@ -356,7 +356,7 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Target</label>
-                                    <select v-model="itemForm.target" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50">
+                                    <select v-model="itemForm.target" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                         <option value="_self">Cùng tab</option>
                                         <option value="_blank">Tab mới</option>
                                     </select>
@@ -364,7 +364,7 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Badge text</label>
-                                    <input v-model="itemForm.badge_text" type="text" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50" placeholder="HOT, Mới, Sale...">
+                                    <input v-model="itemForm.badge_text" type="text" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50" placeholder="HOT, Mới, Sale...">
                                 </div>
 
                                 <div>
@@ -385,7 +385,7 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
 
                                 <div class="col-span-2">
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Mô tả (hiện dưới tiêu đề trong mega menu)</label>
-                                    <input v-model="itemForm.description" type="text" class="w-full px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500/50" placeholder="Mô tả ngắn gọn">
+                                    <input v-model="itemForm.description" type="text" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 px-3 py-2 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50" placeholder="Mô tả ngắn gọn">
                                 </div>
 
                                 <div class="col-span-2 flex items-center gap-6">
@@ -399,7 +399,7 @@ const emojiList = ['🏠','🖥️','💻','🔧','🎧','⚙️','📰','🎮',
                                     </label>
                                     <div v-if="itemForm.is_mega" class="flex items-center gap-2">
                                         <label class="text-sm text-slate-300">Số cột:</label>
-                                        <input v-model.number="itemForm.mega_columns" type="number" min="1" max="6" class="w-16 px-2 py-1 border border-slate-700/50 rounded-lg text-sm">
+                                        <input v-model.number="itemForm.mega_columns" type="number" min="1" max="6" class="w-16 bg-slate-800/60 text-slate-200 px-2 py-1 border border-slate-700/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                                     </div>
                                 </div>
                             </div>

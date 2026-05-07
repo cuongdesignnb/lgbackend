@@ -15,9 +15,9 @@ function submit() { form.put(`/admin/posts/${p.id}`); }
         <form @submit.prevent="submit" class="space-y-6">
             <div class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">
                 <h4 class="font-medium text-slate-200">Nội dung</h4>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Tiêu đề *</label><input v-model="form.title" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"><div v-if="form.errors.title" class="text-red-400 text-xs mt-1">{{ form.errors.title }}</div></div>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Slug *</label><input v-model="form.slug" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></div>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Tóm tắt</label><textarea v-model="form.excerpt" rows="2" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></textarea></div>
+                <div><label class="block text-sm font-medium text-slate-300 mb-1">Tiêu đề *</label><input v-model="form.title" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"><div v-if="form.errors.title" class="text-red-400 text-xs mt-1">{{ form.errors.title }}</div></div>
+                <div><label class="block text-sm font-medium text-slate-300 mb-1">Slug *</label><input v-model="form.slug" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"></div>
+                <div><label class="block text-sm font-medium text-slate-300 mb-1">Tóm tắt</label><textarea v-model="form.excerpt" rows="2" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"></textarea></div>
                 <div><label class="block text-sm font-medium text-slate-300 mb-1">Nội dung *</label><RichEditor v-model="form.body" placeholder="Viết nội dung bài viết..." min-height="300px" /></div>
             </div>
             <div class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">
@@ -25,14 +25,14 @@ function submit() { form.put(`/admin/posts/${p.id}`); }
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-1">Danh mục</label>
-                        <select v-model="form.post_category_id" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm">
+                        <select v-model="form.post_category_id" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                             <option value="">-- Chọn danh mục --</option>
                             <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-1">Trạng thái *</label>
-                        <select v-model="form.status" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm">
+                        <select v-model="form.status" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                             <option value="draft">Nháp</option>
                             <option value="published">Xuất bản</option>
                             <option value="archived">Lưu trữ</option>
@@ -44,14 +44,24 @@ function submit() { form.put(`/admin/posts/${p.id}`); }
                     <MediaPicker v-model="form.featured_image" label="Chọn ảnh đại diện" />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-slate-300 mb-1">Ngày đăng</label><input v-model="form.published_at" type="datetime-local" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></div>
-                    <div class="flex items-end"><label class="flex items-center gap-2 text-sm pb-2"><input v-model="form.is_featured" type="checkbox" class="rounded border-slate-700/50 text-cyan-500"> Nổi bật</label></div>
+                    <div><label class="block text-sm font-medium text-slate-300 mb-1">Ngày đăng</label><input v-model="form.published_at" type="datetime-local" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"></div>
+                    <div class="flex items-end">
+                        <label class="flex flex-col gap-1 text-sm pb-2">
+                            <span class="flex items-center gap-2 text-slate-200">
+                                <input v-model="form.is_featured" type="checkbox" class="rounded border-slate-700/50 text-cyan-500">
+                                Nổi bật
+                            </span>
+                            <span class="text-xs text-slate-500 leading-snug max-w-xs">
+                                Bật mục này nếu muốn ưu tiên hiển thị bài viết trên trang chủ. Nếu không có bài nổi bật, trang chủ sẽ tự lấy bài mới nhất.
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="bg-slate-900 rounded-lg shadow-none border border-slate-800/60 p-6 space-y-4">
                 <h4 class="font-medium text-slate-200">SEO</h4>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Meta Title</label><input v-model="form.meta_title" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></div>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Meta Description</label><textarea v-model="form.meta_description" rows="2" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm"></textarea></div>
+                <div><label class="block text-sm font-medium text-slate-300 mb-1">Meta Title</label><input v-model="form.meta_title" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"></div>
+                <div><label class="block text-sm font-medium text-slate-300 mb-1">Meta Description</label><textarea v-model="form.meta_description" rows="2" class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"></textarea></div>
             </div>
             <div class="flex justify-end gap-3">
                 <Link href="/admin/posts" class="px-4 py-2 text-sm text-slate-300 hover:bg-slate-800/60 rounded-lg">Hủy</Link>

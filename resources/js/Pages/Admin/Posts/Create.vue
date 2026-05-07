@@ -98,7 +98,17 @@ async function generateWithAI() {
                 <div><label class="block text-sm font-medium text-slate-400 mb-1">Ảnh đại diện</label><MediaPicker v-model="form.featured_image" label="Chọn ảnh đại diện" /></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-slate-400 mb-1">Ngày đăng</label><input v-model="form.published_at" type="datetime-local" class="w-full bg-slate-800/60 border border-slate-700/50 rounded-lg px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"></div>
-                    <div class="flex items-end"><label class="flex items-center gap-2 text-sm text-slate-400 pb-2"><input v-model="form.is_featured" type="checkbox" class="rounded border-slate-600 bg-slate-800 text-cyan-500"> Nổi bật</label></div>
+                    <div class="flex items-end">
+                        <label class="flex flex-col gap-1 text-sm pb-2">
+                            <span class="flex items-center gap-2 text-slate-300">
+                                <input v-model="form.is_featured" type="checkbox" class="rounded border-slate-600 bg-slate-800 text-cyan-500">
+                                Nổi bật
+                            </span>
+                            <span class="text-xs text-slate-500 leading-snug max-w-xs">
+                                Bật mục này nếu muốn ưu tiên hiển thị bài viết trên trang chủ. Nếu không có bài nổi bật, trang chủ sẽ tự lấy bài mới nhất.
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="bg-slate-900 rounded-xl border border-slate-800/60 p-6 space-y-4">
