@@ -44,25 +44,33 @@ class BannerController extends Controller
             'metadata' => 'nullable|array',
         ]);
 
-        // Handle file upload
+        // Handle file upload (catch storage / permission errors instead of 500)
         if ($request->hasFile('image_file')) {
-            $file = $request->file('image_file');
-            $fileName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
-                . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('banners', $fileName, 'public');
-            $validated['image'] = '/storage/' . $path;
+            try {
+                $file = $request->file('image_file');
+                $fileName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                    . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('banners', $fileName, 'public');
+                if (!$path) {
+                    return back()->withErrors(['image_file' => 'Khong luu duoc file. Kiem tra quyen ghi storage/app/public/banners (chown -R www:www storage).'])->withInput();
+                }
+                $validated['image'] = '/storage/' . $path;
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->withErrors(['image_file' => 'Loi luu file: ' . $e->getMessage() . ' (thuong la quyen ghi storage hoac PHP upload limits).'])->withInput();
+            }
         }
 
         unset($validated['image_file']);
 
         if (empty($validated['image'])) {
-            return back()->withErrors(['image' => 'Vui lòng tải lên ảnh hoặc nhập URL ảnh.']);
+            return back()->withErrors(['image' => 'Vui long tai len anh hoac nhap URL anh.'])->withInput();
         }
 
         Banner::create($validated);
 
         return redirect()->route('admin.banners.index')
-            ->with('success', 'Tạo banner thành công');
+            ->with('success', 'Tao banner thanh cong');
     }
 
     public function edit(Banner $banner)
@@ -89,19 +97,27 @@ class BannerController extends Controller
             'metadata' => 'nullable|array',
         ]);
 
-        // Handle file upload
+        // Handle file upload (catch storage / permission errors instead of 500)
         if ($request->hasFile('image_file')) {
-            // Delete old file if it was a local upload
-            if ($banner->image && str_starts_with($banner->image, '/storage/banners/')) {
-                $oldPath = str_replace('/storage/', '', $banner->image);
-                Storage::disk('public')->delete($oldPath);
-            }
+            try {
+                // Delete old file if it was a local upload
+                if ($banner->image && str_starts_with($banner->image, '/storage/banners/')) {
+                    $oldPath = str_replace('/storage/', '', $banner->image);
+                    Storage::disk('public')->delete($oldPath);
+                }
 
-            $file = $request->file('image_file');
-            $fileName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
-                . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('banners', $fileName, 'public');
-            $validated['image'] = '/storage/' . $path;
+                $file = $request->file('image_file');
+                $fileName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                    . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('banners', $fileName, 'public');
+                if (!$path) {
+                    return back()->withErrors(['image_file' => 'Khong luu duoc file. Kiem tra quyen ghi storage/app/public/banners (chown -R www:www storage).'])->withInput();
+                }
+                $validated['image'] = '/storage/' . $path;
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->withErrors(['image_file' => 'Loi luu file: ' . $e->getMessage() . ' (thuong la quyen ghi storage hoac PHP upload limits).'])->withInput();
+            }
         }
 
         unset($validated['image_file']);

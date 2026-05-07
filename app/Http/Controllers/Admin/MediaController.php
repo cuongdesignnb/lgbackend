@@ -56,6 +56,15 @@ class MediaController extends Controller
      */
     public function upload(Request $request)
     {
+        // If PHP/Nginx truncated the upload (file > upload_max_filesize / post_max_size /
+        // client_max_body_size), $request->file('files') is empty even though the form
+        // had files attached. Surface a readable error instead of crashing later.
+        if (empty($request->file('files'))) {
+            return back()->withErrors([
+                'files' => 'Khong nhan duoc file. Co the do file qua lon so voi gioi han server (php.ini upload_max_filesize / post_max_size hoac Nginx client_max_body_size). Tang cac gioi han nay len 20M roi thu lai.',
+            ]);
+        }
+
         $request->validate([
             'files' => 'required|array|max:20',
             'files.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,svg,mp4,webm,pdf,doc,docx,xls,xlsx,zip',
@@ -64,8 +73,10 @@ class MediaController extends Controller
 
         $folder = $request->input('folder', '/');
         $uploaded = [];
+        $errors = [];
 
         foreach ($request->file('files') as $file) {
+            try {
             $originalName = $file->getClientOriginalName();
             $name = pathinfo($originalName, PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension();
@@ -133,13 +144,33 @@ class MediaController extends Controller
             if ($shouldConvertToWebP && isset($webpPath) && file_exists($webpPath)) {
                 @unlink($webpPath);
             }
+            } catch (\Throwable $e) {
+                // Per-file failure must not blow up the whole batch into a 500.
+                // Common causes: storage/ not writable (chown -R www:www storage),
+                // gd missing imagewebp(), disk full.
+                $errors[] = ($file->getClientOriginalName() ?? '?') . ': ' . $e->getMessage();
+                report($e);
+            }
         }
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['files' => $uploaded], 201);
+            return response()->json([
+                'files' => $uploaded,
+                'errors' => $errors,
+            ], $uploaded ? 201 : 422);
         }
 
-        return back()->with('success', count($uploaded) . ' file Ä‘Ã£ Ä‘Æ°á»£c upload.');
+        if (empty($uploaded) && $errors) {
+            return back()->withErrors([
+                'files' => 'Upload that bai: ' . implode(' | ', $errors) . ' (Kiem tra quyen ghi storage/ va extension gd co WebP).',
+            ]);
+        }
+
+        $msg = count($uploaded) . ' file da duoc upload.';
+        if ($errors) {
+            $msg .= ' (' . count($errors) . ' file loi: ' . implode(' | ', $errors) . ')';
+        }
+        return back()->with('success', $msg);
     }
 
     /**
@@ -159,7 +190,7 @@ class MediaController extends Controller
             return response()->json(['media' => $medium->fresh()]);
         }
 
-        return back()->with('success', 'ÄÃ£ cáº­p nháº­t thÃ´ng tin file.');
+        return back()->with('success', 'Đã cập nhật thông tin file.');
     }
 
     /**
@@ -174,10 +205,10 @@ class MediaController extends Controller
         $medium->delete();
 
         if ($request->wantsJson()) {
-            return response()->json(['message' => 'ÄÃ£ xoÃ¡ file.']);
+            return response()->json(['message' => 'Đã xoá file.']);
         }
 
-        return back()->with('success', 'ÄÃ£ xoÃ¡ file.');
+        return back()->with('success', 'Đã xoá file.');
     }
 
     /**
@@ -197,7 +228,7 @@ class MediaController extends Controller
             $item->delete();
         }
 
-        return back()->with('success', count($items) . ' file Ä‘Ã£ Ä‘Æ°á»£c xoÃ¡.');
+        return back()->with('success', count($items) . ' file đã được xoá.');
     }
 
     /**
@@ -216,7 +247,7 @@ class MediaController extends Controller
         // Create dir on disk
         Storage::disk('public')->makeDirectory('media/' . $folderPath);
 
-        return back()->with('success', 'ThÆ° má»¥c "' . $request->name . '" Ä‘Ã£ Ä‘Æ°á»£c táº¡o.');
+        return back()->with('success', 'Thư mục "' . $request->name . '" đã được tạo.');
     }
 
     /**

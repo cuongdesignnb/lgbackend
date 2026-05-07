@@ -138,10 +138,24 @@ function removeUploadFile(idx) {
     uploadFiles.value.splice(idx, 1);
 }
 
+const uploadError = ref('');
+
 function submitUpload() {
     if (!uploadFiles.value.length) return;
     uploading.value = true;
     uploadProgress.value = 0;
+    uploadError.value = '';
+
+    // Pre-flight client-side size check so the user sees an error instead of a
+    // blank page when PHP `upload_max_filesize` or Nginx `client_max_body_size`
+    // refuses the request (those reject before Laravel runs → no Inertia response).
+    const MAX_PER_FILE = 10 * 1024 * 1024; // 10 MB matches `mimes` validation
+    const oversize = uploadFiles.value.find(f => f.size > MAX_PER_FILE);
+    if (oversize) {
+        uploadError.value = `File "${oversize.name}" lớn hơn 10 MB. Vui lòng chọn file nhỏ hơn hoặc nhờ admin nâng giới hạn upload trên server (php.ini upload_max_filesize / Nginx client_max_body_size).`;
+        uploading.value = false;
+        return;
+    }
 
     const formData = new FormData();
     uploadFiles.value.forEach(f => formData.append('files[]', f));
@@ -149,6 +163,7 @@ function submitUpload() {
 
     router.post('/admin/media/upload', formData, {
         forceFormData: true,
+        preserveScroll: true,
         onProgress: (progress) => {
             uploadProgress.value = progress.percentage;
         },
@@ -158,8 +173,13 @@ function submitUpload() {
             uploadFiles.value = [];
             selectedItems.value = [];
         },
-        onError: () => {
+        onError: (errors) => {
             uploading.value = false;
+            // Surface validation errors as a single user-readable message
+            const msgs = Object.values(errors || {}).flat().filter(Boolean);
+            uploadError.value = msgs.length
+                ? msgs.join(' · ')
+                : 'Upload thất bại. Có thể do file quá lớn, định dạng không được hỗ trợ, hoặc thư mục storage chưa có quyền ghi (chown -R www:www storage).';
         },
     });
 }
@@ -460,6 +480,11 @@ function isImage(item) {
                             <div class="h-full bg-cyan-600 rounded-full transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
                         </div>
                         <p class="text-xs text-slate-400 mt-1 text-center">{{ uploadProgress }}%</p>
+                    </div>
+
+                    <!-- Error -->
+                    <div v-if="uploadError" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg text-sm">
+                        {{ uploadError }}
                     </div>
 
                     <!-- Actions -->
