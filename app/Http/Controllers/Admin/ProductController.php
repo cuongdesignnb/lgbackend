@@ -275,4 +275,28 @@ class ProductController extends Controller
 
         return response()->download($tempPath, 'mau-nhap-san-pham.xlsx')->deleteFileAfterSend(true);
     }
+    /**
+     * Quick update product fields (price, stock, status, featured) without touching images/specs.
+     */
+    public function quickUpdate(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'price' => 'sometimes|numeric|min:0',
+            'sale_price' => 'sometimes|nullable|numeric|min:0',
+            'stock_quantity' => 'sometimes|integer|min:0',
+            'is_active' => 'sometimes|boolean',
+            'is_featured' => 'sometimes|boolean',
+            'status' => 'sometimes|in:active,inactive,out_of_stock',
+        ]);
+
+        // Map status to is_active if provided
+        if (isset($validated['status'])) {
+            $validated['is_active'] = $validated['status'] === 'active';
+            unset($validated['status']);
+        }
+
+        $product->update($validated);
+
+        return back()->with('success', "Cập nhật nhanh \"{$product->name}\" thành công");
+    }
 }

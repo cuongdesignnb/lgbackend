@@ -16,7 +16,10 @@ class BlogController extends Controller
     {
         $query = Post::with(['category', 'author'])
             ->where('status', 'published')
-            ->where('published_at', '<=', now());
+            ->where(function ($q) {
+                $q->whereNull('published_at')
+                  ->orWhere('published_at', '<=', now());
+            });
 
         // Filter by category
         if ($request->has('category')) {
@@ -93,9 +96,26 @@ class BlogController extends Controller
         $posts = Post::with(['category', 'author'])
             ->where('status', 'published')
             ->where('is_featured', true)
-            ->orderBy('published_at', 'desc')
+            ->where(function ($q) {
+                $q->whereNull('published_at')
+                  ->orWhere('published_at', '<=', now());
+            })
+            ->orderByRaw('published_at IS NULL, published_at DESC')
             ->limit(5)
             ->get();
+
+        // Fallback: if no featured posts, get latest published
+        if ($posts->isEmpty()) {
+            $posts = Post::with(['category', 'author'])
+                ->where('status', 'published')
+                ->where(function ($q) {
+                    $q->whereNull('published_at')
+                      ->orWhere('published_at', '<=', now());
+                })
+                ->latest('published_at')
+                ->limit(5)
+                ->get();
+        }
 
         return response()->json($posts);
     }

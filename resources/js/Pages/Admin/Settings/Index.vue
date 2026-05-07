@@ -205,7 +205,7 @@ function togglePasswordVisibility(key) {
                                                         v-model="formData[item.key]"
                                                         type="text"
                                                         :placeholder="'URL hình ảnh hoặc chọn từ thư viện...'"
-                                                        class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                                        class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                                     />
                                                     <div class="flex items-center gap-2">
                                                         <MediaPicker
@@ -232,7 +232,7 @@ function togglePasswordVisibility(key) {
                                                 v-model="formData[item.key]"
                                                 :type="passwordVisible[item.key] ? 'text' : 'password'"
                                                 :placeholder="item.label"
-                                                class="w-full border border-slate-700/50 rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                                class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                             />
                                             <button type="button" @click="togglePasswordVisibility(item.key)"
                                                     class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1">
@@ -253,7 +253,7 @@ function togglePasswordVisibility(key) {
                                             v-model="formData[item.key]"
                                             type="text"
                                             :placeholder="item.label"
-                                            class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                            class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                         />
                                     </template>
 
@@ -272,7 +272,7 @@ function togglePasswordVisibility(key) {
                                                 v-model="formData[item.key]"
                                                 type="text"
                                                 placeholder="#c8102e"
-                                                class="flex-1 border border-slate-700/50 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                                class="flex-1 bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                                 maxlength="7"
                                             />
                                             <div class="w-20 h-10 rounded-lg border border-slate-700/50 flex-shrink-0" :style="{ backgroundColor: formData[item.key] || '#000' }"></div>
@@ -285,7 +285,7 @@ function togglePasswordVisibility(key) {
                                         v-model="formData[item.key]"
                                         :placeholder="item.label"
                                         rows="3"
-                                        class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                        class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                     />
 
                                     <!-- Boolean toggle -->
@@ -306,14 +306,14 @@ function togglePasswordVisibility(key) {
                                         v-model="formData[item.key]"
                                         type="number"
                                         :placeholder="item.label"
-                                        class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                        class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                     />
 
                                     <!-- Select -->
                                     <select
                                         v-else-if="item.type === 'select' && item.options"
                                         v-model="formData[item.key]"
-                                        class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                        class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                     >
                                         <option v-for="opt in (typeof item.options === 'string' ? JSON.parse(item.options) : item.options)?.choices || []" :key="opt" :value="opt">
                                             {{ opt }}
@@ -326,7 +326,7 @@ function togglePasswordVisibility(key) {
                                         v-model="formData[item.key]"
                                         type="text"
                                         :placeholder="item.label"
-                                        class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                        class="w-full bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                     />
 
                                     <p class="text-xs text-slate-500 mt-1">{{ item.key }}</p>
@@ -350,7 +350,7 @@ function togglePasswordVisibility(key) {
                                             v-model="testEmail"
                                             type="email"
                                             placeholder="admin@example.com"
-                                            class="flex-1 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+                                            class="flex-1 bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                         />
                                         <button
                                             type="button"

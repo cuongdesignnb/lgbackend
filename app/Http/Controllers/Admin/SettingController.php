@@ -33,6 +33,12 @@ class SettingController extends Controller
             $setting = Setting::where('key', $item['key'])->first();
             if ($setting) {
                 $value = $item['value'];
+
+                // Don't overwrite password fields with empty values
+                if ($setting->type === 'password' && (is_null($value) || $value === '')) {
+                    continue;
+                }
+
                 if (is_array($value)) {
                     $value = json_encode($value);
                 }
@@ -63,7 +69,22 @@ class SettingController extends Controller
 
             return back()->with('success', 'Email test đã được gửi thành công đến ' . $request->input('email'));
         } catch (\Exception $e) {
-            return back()->with('error', 'Gửi email thất bại: ' . $e->getMessage());
+            $message = $e->getMessage();
+            $hint = '';
+
+            // Provide Gmail-specific hints
+            $smtpHost = Setting::get('smtp_host', '');
+            if (str_contains($smtpHost, 'gmail')) {
+                if (str_contains($message, 'Authentication') || str_contains($message, '535') || str_contains($message, 'Username and Password not accepted')) {
+                    $hint = ' → Gmail yêu cầu dùng "App Password" (Mật khẩu ứng dụng), không phải mật khẩu tài khoản Google thường. Vào myaccount.google.com → Bảo mật → Mật khẩu ứng dụng để tạo.';
+                } elseif (str_contains($message, 'Connection refused') || str_contains($message, 'Connection timed out')) {
+                    $hint = ' → Kiểm tra SMTP Host: smtp.gmail.com, Port: 587, Encryption: tls. Đảm bảo server cho phép kết nối outbound port 587.';
+                } elseif (str_contains($message, 'certificate') || str_contains($message, 'SSL')) {
+                    $hint = ' → Thử đổi Encryption sang "tls" với Port 587, hoặc "ssl" với Port 465.';
+                }
+            }
+
+            return back()->with('error', 'Gửi email thất bại: ' . $message . $hint);
         }
     }
 }

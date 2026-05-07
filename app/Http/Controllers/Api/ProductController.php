@@ -72,16 +72,45 @@ class ProductController extends Controller
     }
 
     /**
-     * Get featured products
+     * Get featured products with admin-configurable fallback chain:
+     *   1. Explicit `homepage_featured_product_ids` setting (CSV of IDs).
+     *   2. Products flagged is_featured.
+     *   3. Latest products in `homepage_featured_category_ids`/_slugs (if set).
+     *   4. Latest active products overall.
      */
     public function featured(): JsonResponse
     {
-        $products = Product::with(['category', 'brand', 'images'])
-            ->where('is_active', true)
-            ->where('is_featured', true)
-            ->limit(8)
-            ->get();
+        $base = Product::with(['category', 'brand', 'images'])->where('is_active', true);
 
+        // 1) Explicit pinned IDs
+        $explicitIds = array_filter(array_map('trim', explode(',', (string) \App\Models\Setting::get('homepage_featured_product_ids', ''))));
+        if (!empty($explicitIds)) {
+            $products = (clone $base)->whereIn('id', $explicitIds)->limit(12)->get()
+                ->sortBy(fn($p) => array_search((string) $p->id, $explicitIds))
+                ->values();
+            if ($products->isNotEmpty()) return response()->json($products);
+        }
+
+        // 2) is_featured flag
+        $products = (clone $base)->where('is_featured', true)->latest()->limit(8)->get();
+        if ($products->isNotEmpty()) return response()->json($products);
+
+        // 3) Featured categories (by ID or slug)
+        $catIds = array_filter(array_map('trim', explode(',', (string) \App\Models\Setting::get('homepage_featured_category_ids', ''))));
+        $catSlugs = array_filter(array_map('trim', explode(',', (string) \App\Models\Setting::get('homepage_featured_category_slugs', ''))));
+        if (!empty($catSlugs)) {
+            $catIds = array_merge(
+                $catIds,
+                Category::whereIn('slug', $catSlugs)->pluck('id')->all()
+            );
+        }
+        if (!empty($catIds)) {
+            $products = (clone $base)->whereIn('category_id', $catIds)->latest()->limit(8)->get();
+            if ($products->isNotEmpty()) return response()->json($products);
+        }
+
+        // 4) Latest active products overall
+        $products = (clone $base)->latest()->limit(8)->get();
         return response()->json($products);
     }
 

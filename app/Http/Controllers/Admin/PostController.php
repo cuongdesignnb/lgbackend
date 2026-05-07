@@ -62,6 +62,11 @@ class PostController extends Controller
         $validated['user_id'] = Auth::id() ?? 1;
         $validated['view_count'] = 0;
 
+        // Auto-set published_at when publishing without a specific date
+        if (($validated['status'] ?? '') === 'published' && empty($validated['published_at'])) {
+            $validated['published_at'] = now();
+        }
+
         Post::create($validated);
 
         return redirect()->route('admin.posts.index')
@@ -93,6 +98,11 @@ class PostController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
         ]);
+
+        // Auto-set published_at when publishing without a specific date
+        if (($validated['status'] ?? '') === 'published' && empty($validated['published_at']) && empty($post->published_at)) {
+            $validated['published_at'] = now();
+        }
 
         $post->update($validated);
 

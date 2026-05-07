@@ -58,6 +58,7 @@ Route::prefix('admin')->middleware(['web', 'admin'])->name('admin.')->group(func
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
     Route::get('products/import-template', [ProductController::class, 'importTemplate'])->name('products.import-template');
+    Route::patch('products/{product}/quick-update', [ProductController::class, 'quickUpdate'])->name('products.quick-update');
 
     // Products
     Route::resource('products', ProductController::class);

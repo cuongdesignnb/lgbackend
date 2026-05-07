@@ -28,10 +28,10 @@ class MediaController extends Controller
             match ($request->type) {
                 'image' => $query->where('mime_type', 'like', 'image/%'),
                 'video' => $query->where('mime_type', 'like', 'video/%'),
-                'document' => $query->whereNotIn('mime_type', fn($q) =>
-                    $q->where('mime_type', 'like', 'image/%')
-                      ->orWhere('mime_type', 'like', 'video/%')
-                ),
+                'document' => $query->where(function ($q) {
+                    $q->where('mime_type', 'not like', 'image/%')
+                      ->where('mime_type', 'not like', 'video/%');
+                }),
                 default => null,
             };
         }
@@ -139,7 +139,7 @@ class MediaController extends Controller
             return response()->json(['files' => $uploaded], 201);
         }
 
-        return back()->with('success', count($uploaded) . ' file đã được upload.');
+        return back()->with('success', count($uploaded) . ' file Ä‘Ã£ Ä‘Æ°á»£c upload.');
     }
 
     /**
@@ -159,7 +159,7 @@ class MediaController extends Controller
             return response()->json(['media' => $medium->fresh()]);
         }
 
-        return back()->with('success', 'Đã cập nhật thông tin file.');
+        return back()->with('success', 'ÄÃ£ cáº­p nháº­t thÃ´ng tin file.');
     }
 
     /**
@@ -174,10 +174,10 @@ class MediaController extends Controller
         $medium->delete();
 
         if ($request->wantsJson()) {
-            return response()->json(['message' => 'Đã xoá file.']);
+            return response()->json(['message' => 'ÄÃ£ xoÃ¡ file.']);
         }
 
-        return back()->with('success', 'Đã xoá file.');
+        return back()->with('success', 'ÄÃ£ xoÃ¡ file.');
     }
 
     /**
@@ -197,7 +197,7 @@ class MediaController extends Controller
             $item->delete();
         }
 
-        return back()->with('success', count($items) . ' file đã được xoá.');
+        return back()->with('success', count($items) . ' file Ä‘Ã£ Ä‘Æ°á»£c xoÃ¡.');
     }
 
     /**
@@ -216,7 +216,7 @@ class MediaController extends Controller
         // Create dir on disk
         Storage::disk('public')->makeDirectory('media/' . $folderPath);
 
-        return back()->with('success', 'Thư mục "' . $request->name . '" đã được tạo.');
+        return back()->with('success', 'ThÆ° má»¥c "' . $request->name . '" Ä‘Ã£ Ä‘Æ°á»£c táº¡o.');
     }
 
     /**

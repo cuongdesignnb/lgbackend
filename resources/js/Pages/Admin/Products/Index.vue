@@ -15,6 +15,43 @@ const showImportModal = ref(false);
 const importForm = useForm({ file: null });
 const importFileRef = ref(null);
 
+// ── Quick Edit modal ──
+const showQuickEdit = ref(false);
+const quickEditTarget = ref(null);
+const quickForm = useForm({
+    price: 0,
+    sale_price: '',
+    stock_quantity: 0,
+    is_active: true,
+    is_featured: false,
+});
+function openQuickEdit(product) {
+    quickEditTarget.value = product;
+    quickForm.price = Number(product.price ?? 0);
+    quickForm.sale_price = product.sale_price ? Number(product.sale_price) : '';
+    quickForm.stock_quantity = Number(product.quantity ?? product.stock_quantity ?? 0);
+    quickForm.is_active = Boolean(product.is_active);
+    quickForm.is_featured = Boolean(product.is_featured);
+    showQuickEdit.value = true;
+}
+function submitQuickEdit() {
+    if (!quickEditTarget.value) return;
+    const payload = {
+        price: Number(quickForm.price) || 0,
+        sale_price: quickForm.sale_price === '' || quickForm.sale_price == null ? null : Number(quickForm.sale_price),
+        stock_quantity: Number(quickForm.stock_quantity) || 0,
+        is_active: !!quickForm.is_active,
+        is_featured: !!quickForm.is_featured,
+    };
+    router.patch(`/admin/products/${quickEditTarget.value.id}/quick-update`, payload, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showQuickEdit.value = false;
+            quickEditTarget.value = null;
+        },
+    });
+}
+
 let timer;
 watch(search, () => { clearTimeout(timer); timer = setTimeout(applyFilters, 400); });
 function applyFilters() {
@@ -82,16 +119,16 @@ function submitImport() {
                 </button>
             </div>
             <div class="flex items-center gap-3">
-                <input v-model="search" placeholder="Tìm tên, SKU..." class="border border-slate-700/50 rounded-lg px-3 py-2 text-sm w-48 focus:ring-2 focus:ring-cyan-500/50">
-                <select v-model="categoryId" @change="applyFilters()" class="border border-slate-700/50 rounded-lg px-3 py-2 text-sm">
+                <input v-model="search" placeholder="Tìm tên, SKU..." class="bg-slate-800/60 text-slate-200 placeholder-slate-500 border border-slate-700/50 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
+                <select v-model="categoryId" @change="applyFilters()" class="bg-slate-800/60 text-slate-200 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                     <option value="">Tất cả danh mục</option>
                     <option v-for="c in categories" :value="c.id">{{ c.name }}</option>
                 </select>
-                <select v-model="brandId" @change="applyFilters()" class="border border-slate-700/50 rounded-lg px-3 py-2 text-sm">
+                <select v-model="brandId" @change="applyFilters()" class="bg-slate-800/60 text-slate-200 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                     <option value="">Tất cả thương hiệu</option>
                     <option v-for="b in brands" :value="b.id">{{ b.name }}</option>
                 </select>
-                <select v-model="status" @change="applyFilters()" class="border border-slate-700/50 rounded-lg px-3 py-2 text-sm">
+                <select v-model="status" @change="applyFilters()" class="bg-slate-800/60 text-slate-200 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50">
                     <option value="">Tất cả trạng thái</option>
                     <option value="active">Đang bán</option>
                     <option value="inactive">Ẩn</option>
@@ -135,6 +172,7 @@ function submitImport() {
                         <a :href="`/${p.category?.slug || 'san-pham'}/${p.slug}`" target="_blank" class="inline-flex items-center text-slate-400 hover:text-cyan-400 transition-colors" title="Xem trên website">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
+                        <button @click="openQuickEdit(p)" class="text-amber-400 hover:text-amber-300 text-sm" title="Sửa nhanh">⚡ Sửa nhanh</button>
                         <Link :href="`/admin/products/${p.id}/edit`" class="text-cyan-500 hover:text-cyan-300 text-sm">Sửa</Link>
                         <button @click="destroy(p.id)" class="text-red-400 hover:text-red-300 text-sm">Xóa</button>
                     </td>
@@ -150,6 +188,64 @@ function submitImport() {
             :disabled="!link.url" :class="link.active ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-300 hover:bg-slate-800/40'"
             class="px-3 py-1.5 text-sm border border-slate-700/50 rounded disabled:opacity-40" v-html="link.label"/>
     </div>
+
+    <!-- Quick Edit Modal -->
+    <Teleport to="body">
+        <div v-if="showQuickEdit && quickEditTarget" class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/60" @click="showQuickEdit = false"></div>
+            <div class="relative bg-slate-900 rounded-xl border border-slate-800/60 w-full max-w-md mx-4 p-6 shadow-2xl">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                        <span class="text-amber-400">⚡</span>
+                        Sửa nhanh sản phẩm
+                    </h3>
+                    <button @click="showQuickEdit = false" class="text-slate-500 hover:text-slate-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <p class="text-sm text-slate-400 mb-4 truncate">{{ quickEditTarget.name }} <span class="text-xs text-slate-500">— SKU {{ quickEditTarget.sku }}</span></p>
+
+                <form @submit.prevent="submitQuickEdit" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Giá gốc (₫)</label>
+                            <input v-model.number="quickForm.price" type="number" min="0" step="1000" class="w-full bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Giá khuyến mãi (₫)</label>
+                            <input v-model="quickForm.sale_price" type="number" min="0" step="1000" placeholder="Để trống nếu không khuyến mãi" class="w-full bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Tồn kho</label>
+                        <input v-model.number="quickForm.stock_quantity" type="number" min="0" class="w-full bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+                    </div>
+                    <div class="flex items-center gap-6 pt-1">
+                        <label class="flex items-center gap-2 text-sm text-slate-200">
+                            <input v-model="quickForm.is_active" type="checkbox" class="rounded border-slate-700/50 text-amber-500 focus:ring-amber-500/50">
+                            Đang bán
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-slate-200">
+                            <input v-model="quickForm.is_featured" type="checkbox" class="rounded border-slate-700/50 text-amber-500 focus:ring-amber-500/50">
+                            Nổi bật
+                        </label>
+                    </div>
+
+                    <p class="text-xs text-slate-500 bg-slate-800/40 rounded p-2">
+                        Sửa nhanh chỉ cập nhật các trường trên. Ảnh, mô tả, thông số, gallery sẽ giữ nguyên.
+                    </p>
+
+                    <div class="flex justify-end gap-3 pt-1">
+                        <button type="button" @click="showQuickEdit = false" class="px-4 py-2 text-sm text-slate-300 hover:bg-slate-800/60 rounded-lg">Hủy</button>
+                        <button type="submit" :disabled="quickForm.processing" class="px-5 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm font-medium disabled:opacity-50">
+                            {{ quickForm.processing ? 'Đang lưu...' : 'Lưu thay đổi' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </Teleport>
 
     <!-- Import Modal -->
     <Teleport to="body">
