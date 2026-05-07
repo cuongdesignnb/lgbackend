@@ -135,7 +135,27 @@ function onFileSelected(e) {
 }
 
 function removeUploadFile(idx) {
-    uploadFiles.value.splice(idx, 1);
+    const removed = uploadFiles.value.splice(idx, 1)[0];
+    // free the object URL we created for this file (preview)
+    if (removed && filePreviews.value.has(removed)) {
+        const url = filePreviews.value.get(removed);
+        try { (window.URL || URL).revokeObjectURL(url); } catch (e) { /* ignore */ }
+        filePreviews.value.delete(removed);
+    }
+}
+
+// Object-URL cache keyed by File instance. Computed in script (not template)
+// because Vue 3's template compiler does not always expose the global `URL`
+// constructor — accessing `URL.createObjectURL(file)` from the template
+// produced "Cannot read properties of undefined (reading 'createObjectURL')".
+const filePreviews = ref(new Map());
+function previewUrl(file) {
+    if (!file || !file.type || !file.type.startsWith('image/')) return '';
+    if (typeof window === 'undefined' || !window.URL) return '';
+    if (filePreviews.value.has(file)) return filePreviews.value.get(file);
+    const url = window.URL.createObjectURL(file);
+    filePreviews.value.set(file, url);
+    return url;
 }
 
 const uploadError = ref('');
@@ -455,7 +475,7 @@ function isImage(item) {
                             class="flex items-center justify-between p-2 bg-slate-800/40 rounded-lg">
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-10 h-10 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                    <img v-if="file.type.startsWith('image/')" :src="URL.createObjectURL(file)" class="w-full h-full object-cover">
+                                    <img v-if="file.type && file.type.startsWith('image/')" :src="previewUrl(file)" class="w-full h-full object-cover">
                                     <svg v-else class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 </div>
                                 <div class="min-w-0">

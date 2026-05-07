@@ -52,17 +52,39 @@ class MediaController extends Controller
     }
 
     /**
-     * Upload files
+     * Upload files. Wrapped in a top-level try/catch so a server-side error
+     * (storage permission, GD missing, ImageMagick fail, DB column mismatch...)
+     * never escapes as a generic HTML 500 — admin always sees a readable
+     * Vietnamese message via Inertia errors / JSON.
      */
     public function upload(Request $request)
+    {
+        try {
+            return $this->doUpload($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Let Laravel render the standard 422 with field errors.
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+            $msg = 'Upload that bai: ' . $e->getMessage();
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['message' => $msg, 'errors' => ['files' => [$msg]]], 422);
+            }
+            return back()->withErrors(['files' => $msg])->withInput();
+        }
+    }
+
+    private function doUpload(Request $request)
     {
         // If PHP/Nginx truncated the upload (file > upload_max_filesize / post_max_size /
         // client_max_body_size), $request->file('files') is empty even though the form
         // had files attached. Surface a readable error instead of crashing later.
         if (empty($request->file('files'))) {
-            return back()->withErrors([
-                'files' => 'Khong nhan duoc file. Co the do file qua lon so voi gioi han server (php.ini upload_max_filesize / post_max_size hoac Nginx client_max_body_size). Tang cac gioi han nay len 20M roi thu lai.',
-            ]);
+            $msg = 'Khong nhan duoc file. Co the do file qua lon so voi gioi han server (php.ini upload_max_filesize / post_max_size hoac Nginx client_max_body_size). Tang cac gioi han nay len 20M roi thu lai.';
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['message' => $msg, 'errors' => ['files' => [$msg]]], 422);
+            }
+            return back()->withErrors(['files' => $msg]);
         }
 
         $request->validate([
@@ -71,84 +93,103 @@ class MediaController extends Controller
             'folder' => 'nullable|string|max:255',
         ]);
 
+        // Make sure the storage directories exist and are writable. Without this
+        // a fresh deploy where `php artisan storage:link` ran but `media/` was
+        // never created produces a confusing "file_put_contents failed" trace.
+        try {
+            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('media');
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         $folder = $request->input('folder', '/');
         $uploaded = [];
         $errors = [];
 
         foreach ($request->file('files') as $file) {
-            try {
             $originalName = $file->getClientOriginalName();
-            $name = pathinfo($originalName, PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $mime = $file->getMimeType();
-            $size = $file->getSize();
+            try {
+                $name = pathinfo($originalName, PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
+                $mime = $file->getMimeType();
+                $size = $file->getSize();
 
-            // Check if image needs WebP conversion
-            $shouldConvertToWebP = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif']) 
-                                   && str_starts_with($mime, 'image/');
+                // Convert to WebP only if GD has imagewebp() AND source is a
+                // common raster image. Skips silently when GD lacks WebP.
+                $shouldConvertToWebP = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif'])
+                    && str_starts_with($mime, 'image/')
+                    && function_exists('imagewebp');
 
-            // Convert to WebP if applicable
-            if ($shouldConvertToWebP) {
-                $webpPath = $this->convertToWebP($file);
-                if ($webpPath) {
-                    $file = new \Illuminate\Http\File($webpPath);
-                    $extension = 'webp';
-                    $mime = 'image/webp';
-                    $size = filesize($webpPath);
-                }
-            }
-
-            // Generate unique filename
-            $fileName = Str::slug($name) . '-' . Str::random(6) . '.' . $extension;
-            $storagePath = ltrim($folder, '/');
-            $storagePath = $storagePath === '' ? 'media' : 'media/' . $storagePath;
-
-            // Store file
-            $path = $file->storeAs($storagePath, $fileName, 'public');
-
-            // Get image dimensions
-            $width = null;
-            $height = null;
-            if (str_starts_with($mime, 'image/') && $mime !== 'image/svg+xml') {
-                try {
-                    $dimensions = getimagesize($file->getRealPath());
-                    if ($dimensions) {
-                        $width = $dimensions[0];
-                        $height = $dimensions[1];
+                $webpPath = null;
+                if ($shouldConvertToWebP) {
+                    $webpPath = $this->convertToWebP($file);
+                    if ($webpPath) {
+                        $file = new \Illuminate\Http\File($webpPath);
+                        $extension = 'webp';
+                        $mime = 'image/webp';
+                        $size = filesize($webpPath);
                     }
-                } catch (\Exception $e) {
-                    // skip
                 }
 
-                // Generate thumbnail (300px wide)
-                $this->createThumbnail($file, $storagePath, $fileName);
-            }
+                // Generate unique filename
+                $fileName = Str::slug($name) . '-' . Str::random(6) . '.' . $extension;
+                $storagePath = ltrim($folder, '/');
+                $storagePath = $storagePath === '' ? 'media' : 'media/' . $storagePath;
 
-            $media = Media::create([
-                'name' => $name,
-                'file_name' => $originalName,
-                'path' => $path,
-                'disk' => 'public',
-                'mime_type' => $mime,
-                'size' => $size,
-                'width' => $width,
-                'height' => $height,
-                'alt' => $name,
-                'folder' => $folder,
-                'uploaded_by' => $request->user()?->id,
-            ]);
+                // Store file
+                $path = $file->storeAs($storagePath, $fileName, 'public');
+                if (!$path) {
+                    throw new \RuntimeException('Khong luu duoc file vao storage (kiem tra quyen ghi storage/app/public).');
+                }
 
-            $uploaded[] = $media;
+                // Get image dimensions
+                $width = null;
+                $height = null;
+                if (str_starts_with($mime, 'image/') && $mime !== 'image/svg+xml') {
+                    try {
+                        $dimensions = @getimagesize($file->getRealPath());
+                        if ($dimensions) {
+                            $width = $dimensions[0];
+                            $height = $dimensions[1];
+                        }
+                    } catch (\Throwable $e) {
+                        // skip — dimension is best-effort
+                    }
 
-            // Clean up temporary WebP file
-            if ($shouldConvertToWebP && isset($webpPath) && file_exists($webpPath)) {
-                @unlink($webpPath);
-            }
+                    // Generate thumbnail (300px wide). Thumbnail failure must
+                    // not block the upload — wrapped inside createThumbnail.
+                    try {
+                        $this->createThumbnail($file, $storagePath, $fileName);
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                }
+
+                $media = Media::create([
+                    'name' => $name,
+                    'file_name' => $originalName,
+                    'path' => $path,
+                    'disk' => 'public',
+                    'mime_type' => $mime,
+                    'size' => $size,
+                    'width' => $width,
+                    'height' => $height,
+                    'alt' => $name,
+                    'folder' => $folder,
+                    'uploaded_by' => $request->user()?->id,
+                ]);
+
+                $uploaded[] = $media;
+
+                // Clean up temporary WebP file
+                if ($webpPath && file_exists($webpPath)) {
+                    @unlink($webpPath);
+                }
             } catch (\Throwable $e) {
                 // Per-file failure must not blow up the whole batch into a 500.
                 // Common causes: storage/ not writable (chown -R www:www storage),
-                // gd missing imagewebp(), disk full.
-                $errors[] = ($file->getClientOriginalName() ?? '?') . ': ' . $e->getMessage();
+                // gd missing imagewebp(), disk full, db schema mismatch.
+                $errors[] = $originalName . ': ' . $e->getMessage();
                 report($e);
             }
         }
