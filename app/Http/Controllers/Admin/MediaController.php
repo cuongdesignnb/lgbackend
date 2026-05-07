@@ -67,11 +67,28 @@ class MediaController extends Controller
         } catch (\Throwable $e) {
             report($e);
             $msg = 'Upload that bai: ' . $e->getMessage();
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($this->wantsPureJson($request)) {
                 return response()->json(['message' => $msg, 'errors' => ['files' => [$msg]]], 422);
             }
             return back()->withErrors(['files' => $msg])->withInput();
         }
+    }
+
+    /**
+     * Distinguish a pure-XHR JSON consumer (eg. MediaPicker fetch with
+     * Accept: application/json) from an Inertia request.
+     *
+     * Inertia adds X-Inertia: true and X-Requested-With: XMLHttpRequest, so
+     * $request->ajax() is true for it — but Inertia REQUIRES either an Inertia
+     * response or a redirect; a plain JSON response throws
+     *   "All Inertia requests must receive a valid Inertia response"
+     * on the client. We must therefore only return JSON when the caller is
+     * NOT Inertia.
+     */
+    private function wantsPureJson(Request $request): bool
+    {
+        if ($request->header('X-Inertia') === 'true') return false;
+        return $request->expectsJson();
     }
 
     private function doUpload(Request $request)
@@ -81,7 +98,7 @@ class MediaController extends Controller
         // had files attached. Surface a readable error instead of crashing later.
         if (empty($request->file('files'))) {
             $msg = 'Khong nhan duoc file. Co the do file qua lon so voi gioi han server (php.ini upload_max_filesize / post_max_size hoac Nginx client_max_body_size). Tang cac gioi han nay len 20M roi thu lai.';
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($this->wantsPureJson($request)) {
                 return response()->json(['message' => $msg, 'errors' => ['files' => [$msg]]], 422);
             }
             return back()->withErrors(['files' => $msg]);
@@ -136,8 +153,14 @@ class MediaController extends Controller
                 $storagePath = ltrim($folder, '/');
                 $storagePath = $storagePath === '' ? 'media' : 'media/' . $storagePath;
 
-                // Store file
-                $path = $file->storeAs($storagePath, $fileName, 'public');
+                // Store file via the Storage facade so this works whether $file
+                // is the original UploadedFile OR an Illuminate\Http\File wrapping
+                // the WebP-converted temp path. UploadedFile->storeAs() exists,
+                // but Http\File (used after WebP conversion) does NOT have
+                // storeAs() — calling it produced
+                //   Call to undefined method Illuminate\Http\File::storeAs()
+                $path = \Illuminate\Support\Facades\Storage::disk('public')
+                    ->putFileAs($storagePath, $file, $fileName);
                 if (!$path) {
                     throw new \RuntimeException('Khong luu duoc file vao storage (kiem tra quyen ghi storage/app/public).');
                 }
@@ -194,7 +217,7 @@ class MediaController extends Controller
             }
         }
 
-        if ($request->wantsJson() || $request->ajax()) {
+        if ($this->wantsPureJson($request)) {
             return response()->json([
                 'files' => $uploaded,
                 'errors' => $errors,
