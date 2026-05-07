@@ -2,6 +2,7 @@
 import { useForm, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import MediaPicker from '@/Components/MediaPicker.vue';
 
 const imagePreview = ref(null);
 
@@ -32,6 +33,14 @@ function onFileChange(e) {
     form.image_file = file;
     imagePreview.value = URL.createObjectURL(file);
     form.image = ''; // clear URL if uploading file
+}
+
+// MediaPicker emits a URL string when a media item is chosen.
+// Use it as form.image and clear any pending file upload.
+function onPickFromLibrary(url) {
+    form.image = url || '';
+    form.image_file = null;
+    imagePreview.value = null;
 }
 
 function removeImage() {
@@ -80,18 +89,35 @@ const positions = [
                     </div>
                 </div>
                 <!-- Upload area -->
-                <div v-if="!previewUrl" class="border-2 border-dashed border-slate-700/50 rounded-lg p-8 text-center hover:border-cyan-500/50 transition-colors">
-                    <svg class="w-12 h-12 mx-auto text-slate-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                    <label class="cursor-pointer">
-                        <span class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 text-sm font-medium inline-block">Chọn ảnh từ máy</span>
-                        <input type="file" accept="image/*" @change="onFileChange" class="hidden" />
-                    </label>
+                <div v-if="!previewUrl" class="border-2 border-dashed border-slate-700/50 rounded-lg p-6 sm:p-8 text-center hover:border-cyan-500/50 transition-colors">
+                    <svg class="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-slate-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center">
+                        <label class="cursor-pointer">
+                            <span class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 text-sm font-medium inline-block">Tải lên từ máy</span>
+                            <input type="file" accept="image/*" @change="onFileChange" class="hidden" />
+                        </label>
+                        <span class="text-slate-600 text-xs">hoặc</span>
+                        <!-- MediaPicker: chọn từ thư viện đã upload -->
+                        <div class="banner-mediapicker">
+                            <MediaPicker :model-value="form.image" :label="''" @update:modelValue="onPickFromLibrary" />
+                        </div>
+                    </div>
                     <p class="text-slate-500 text-xs mt-3">JPG, PNG, WebP — tối đa 5MB</p>
                     <p class="text-slate-400 text-xs mt-1 font-medium">Kích thước khuyến nghị: 1200 × 420 px</p>
                     <div class="mt-3 flex items-center gap-2 justify-center">
-                        <span class="text-slate-600 text-xs">hoặc</span>
+                        <span class="text-slate-600 text-xs">hoặc dán URL ảnh trực tiếp</span>
                     </div>
-                    <input v-model="form.image" placeholder="Nhập URL ảnh..." class="mt-2 w-full max-w-md mx-auto border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-300 text-center" />
+                    <input v-model="form.image" placeholder="https://... hoặc /storage/..." class="mt-2 w-full max-w-md mx-auto border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/60 text-slate-200 placeholder-slate-500 text-center focus:outline-none focus:ring-2 focus:ring-cyan-500/50" />
+                </div>
+                <!-- Khi đã có ảnh: vẫn cho phép đổi nhanh từ thư viện -->
+                <div v-else class="mt-3 flex flex-wrap items-center gap-3">
+                    <label class="cursor-pointer">
+                        <span class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm border border-slate-700/50 inline-block">Đổi ảnh từ máy</span>
+                        <input type="file" accept="image/*" @change="onFileChange" class="hidden" />
+                    </label>
+                    <div class="banner-mediapicker">
+                        <MediaPicker :model-value="form.image" :label="''" @update:modelValue="onPickFromLibrary" />
+                    </div>
                 </div>
                 <div v-if="form.errors.image || form.errors.image_file" class="text-red-400 text-xs mt-2">{{ form.errors.image || form.errors.image_file }}</div>
             </div>
