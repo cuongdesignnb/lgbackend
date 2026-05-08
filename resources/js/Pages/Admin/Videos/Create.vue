@@ -1,6 +1,6 @@
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const form = useForm({
@@ -14,6 +14,32 @@ const form = useForm({
     is_active: true,
     is_featured: false,
 });
+
+/**
+ * Extract YouTube/Vimeo thumbnail from embed code for live preview.
+ * The backend does the same extraction on save, but showing it here
+ * gives the admin instant visual feedback.
+ */
+const autoThumbnail = computed(() => {
+    if (form.thumbnail) return null; // admin set a custom one
+    if (form.source !== 'embed' || !form.embed_code) return null;
+
+    const srcMatch = form.embed_code.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    if (!srcMatch) return null;
+    const src = srcMatch[1];
+
+    // YouTube
+    const yt = src.match(/(?:youtube\.com|youtube-nocookie\.com)\/embed\/([a-zA-Z0-9_-]{11})/);
+    if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
+
+    // Vimeo
+    const vm = src.match(/player\.vimeo\.com\/video\/(\d+)/);
+    if (vm) return `https://vumbnail.com/${vm[1]}.jpg`;
+
+    return null;
+});
+
+const displayThumbnail = computed(() => form.thumbnail || autoThumbnail.value);
 
 function submit() {
     form.post('/admin/videos');
@@ -74,8 +100,13 @@ function submit() {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-1">Ảnh thumbnail</label>
-                    <input v-model="form.thumbnail" placeholder="URL ảnh đại diện" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" />
-                    <div v-if="form.thumbnail" class="mt-2"><img :src="form.thumbnail" class="h-24 rounded border border-slate-700/50 object-cover" /></div>
+                    <input v-model="form.thumbnail" placeholder="URL ảnh đại diện (để trống sẽ tự lấy từ video)" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" />
+                    <!-- Thumbnail preview: custom or auto-detected -->
+                    <div v-if="displayThumbnail" class="mt-2 relative">
+                        <img :src="displayThumbnail" class="h-28 rounded border border-slate-700/50 object-cover" @error="$event.target.style.display='none'" />
+                        <span v-if="autoThumbnail && !form.thumbnail" class="absolute top-1.5 left-1.5 bg-cyan-600/90 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Tự động</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1.5">💡 Để trống — hệ thống sẽ tự lấy thumbnail từ YouTube / Vimeo</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>

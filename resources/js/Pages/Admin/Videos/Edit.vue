@@ -1,5 +1,6 @@
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({ video: Object });
@@ -15,6 +16,28 @@ const form = useForm({
     is_active: props.video.is_active ?? true,
     is_featured: props.video.is_featured ?? false,
 });
+
+/**
+ * Auto-detect thumbnail from embed code for live preview.
+ */
+const autoThumbnail = computed(() => {
+    if (form.thumbnail) return null;
+    if (form.source !== 'embed' || !form.embed_code) return null;
+
+    const srcMatch = form.embed_code.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    if (!srcMatch) return null;
+    const src = srcMatch[1];
+
+    const yt = src.match(/(?:youtube\.com|youtube-nocookie\.com)\/embed\/([a-zA-Z0-9_-]{11})/);
+    if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
+
+    const vm = src.match(/player\.vimeo\.com\/video\/(\d+)/);
+    if (vm) return `https://vumbnail.com/${vm[1]}.jpg`;
+
+    return null;
+});
+
+const displayThumbnail = computed(() => form.thumbnail || autoThumbnail.value);
 
 function submit() { form.put(`/admin/videos/${props.video.id}`); }
 </script>
@@ -36,16 +59,36 @@ function submit() { form.put(`/admin/videos/${props.video.id}`); }
             <div v-if="form.source === 'embed'" class="bg-slate-900 rounded-lg border border-slate-800/60 p-6">
                 <h4 class="text-sm font-semibold text-slate-300 mb-3">Mã nhúng *</h4>
                 <textarea v-model="form.embed_code" rows="5" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200 font-mono"></textarea>
+                <div v-if="form.errors.embed_code" class="text-red-400 text-xs mt-1">{{ form.errors.embed_code }}</div>
             </div>
             <div v-if="form.source === 'upload'" class="bg-slate-900 rounded-lg border border-slate-800/60 p-6">
                 <h4 class="text-sm font-semibold text-slate-300 mb-3">URL video *</h4>
                 <input v-model="form.video_url" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" />
             </div>
             <div class="bg-slate-900 rounded-lg border border-slate-800/60 p-6 space-y-4">
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Tiêu đề *</label><input v-model="form.title" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" /></div>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Mô tả</label><textarea v-model="form.description" rows="3" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200"></textarea></div>
-                <div><label class="block text-sm font-medium text-slate-300 mb-1">Ảnh thumbnail</label><input v-model="form.thumbnail" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" /><div v-if="form.thumbnail" class="mt-2"><img :src="form.thumbnail" class="h-24 rounded border border-slate-700/50 object-cover" /></div></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-slate-300 mb-1">Thứ tự</label><input v-model="form.sort_order" type="number" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" /></div></div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Tiêu đề *</label>
+                    <input v-model="form.title" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Mô tả</label>
+                    <textarea v-model="form.description" rows="3" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Ảnh thumbnail</label>
+                    <input v-model="form.thumbnail" placeholder="URL ảnh đại diện (để trống sẽ tự lấy từ video)" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" />
+                    <div v-if="displayThumbnail" class="mt-2 relative">
+                        <img :src="displayThumbnail" class="h-28 rounded border border-slate-700/50 object-cover" @error="$event.target.style.display='none'" />
+                        <span v-if="autoThumbnail && !form.thumbnail" class="absolute top-1.5 left-1.5 bg-cyan-600/90 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">Tự động</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1.5">💡 Để trống — hệ thống sẽ tự lấy thumbnail từ YouTube / Vimeo</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Thứ tự</label>
+                        <input v-model="form.sort_order" type="number" class="w-full border border-slate-700/50 rounded-lg px-3 py-2 text-sm bg-slate-800/50 text-slate-200" />
+                    </div>
+                </div>
                 <div class="flex gap-6">
                     <label class="flex items-center gap-2 text-sm text-slate-300"><input v-model="form.is_active" type="checkbox" class="rounded border-slate-700/50 text-cyan-500 bg-slate-800/50" /> Hiện</label>
                     <label class="flex items-center gap-2 text-sm text-slate-300"><input v-model="form.is_featured" type="checkbox" class="rounded border-slate-700/50 text-amber-500 bg-slate-800/50" /> Nổi bật</label>

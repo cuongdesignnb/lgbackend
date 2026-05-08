@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Video;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -66,6 +67,31 @@ class VideoController extends Controller
         return $code;
     }
 
+    /**
+     * Extract a thumbnail URL from embed code (YouTube / Vimeo).
+     * Returns null if we can't determine one.
+     */
+    private function extractThumbnailFromEmbed(?string $embedCode): ?string
+    {
+        if (!$embedCode) return null;
+
+        // Extract iframe src
+        if (!preg_match('/\bsrc\s*=\s*["\']([^"\']+)["\']/i', $embedCode, $m)) return null;
+        $src = $m[1];
+
+        // YouTube: extract video ID
+        if (preg_match('/(?:youtube\.com|youtube-nocookie\.com)\/embed\/([a-zA-Z0-9_-]{11})/', $src, $yt)) {
+            return 'https://img.youtube.com/vi/' . $yt[1] . '/hqdefault.jpg';
+        }
+
+        // Vimeo: extract video ID, use vumbnail.com service (no API key needed)
+        if (preg_match('/player\.vimeo\.com\/video\/(\d+)/', $src, $vm)) {
+            return 'https://vumbnail.com/' . $vm[1] . '.jpg';
+        }
+
+        return null;
+    }
+
     public function index()
     {
         return Inertia::render('Admin/Videos/Index', [
@@ -94,6 +120,11 @@ class VideoController extends Controller
 
         if (($validated['source'] ?? null) === 'embed') {
             $validated['embed_code'] = $this->validateEmbedCode($validated['embed_code'] ?? null);
+
+            // Auto-fill thumbnail from embed if not provided
+            if (empty($validated['thumbnail'])) {
+                $validated['thumbnail'] = $this->extractThumbnailFromEmbed($validated['embed_code']);
+            }
         }
 
         Video::create($validated);
@@ -125,6 +156,11 @@ class VideoController extends Controller
 
         if (($validated['source'] ?? null) === 'embed') {
             $validated['embed_code'] = $this->validateEmbedCode($validated['embed_code'] ?? null);
+
+            // Auto-fill thumbnail from embed if not provided
+            if (empty($validated['thumbnail'])) {
+                $validated['thumbnail'] = $this->extractThumbnailFromEmbed($validated['embed_code']);
+            }
         }
 
         $video->update($validated);
